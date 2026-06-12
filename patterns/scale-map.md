@@ -44,8 +44,12 @@ res <- if (requireNamespace("blockr.theme", quietly = TRUE)) {
 the supplied levels) plus `order` (fixed levels in binding order first), or
 `NULL` for an unregistered variable. Pass factor `levels()` when available —
 level order lives in the data as factors. Reference consumers:
-`blockr.bi/R/scale-map-resolve.R` (drilldown chart),
-`blockr.pharma/R/viz-ae-gantt.R` (AE gantt).
+`blockr.bi/R/scale-map-resolve.R` (drilldown chart, applies at render via
+the JS payload), `blockr.ggplot/R/scale-map.R` (injects literal
+`scale_*_manual()` into the block expr — exported code reproduces the shown
+colors; only complete assignments, since `scale_*_manual()` errors on
+gaps), `blockr.pharma/R/viz-ae-gantt.R` (AE gantt). Cross-renderer demo:
+`blockr.theme/dev/scale-map-demo.R` (echarts + ggplot, hex-identical).
 
 ## Authoring (template/study side)
 
