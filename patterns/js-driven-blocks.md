@@ -196,7 +196,7 @@ Row divider principle: the first "key" input in a row gets `border-right`; text 
 Lessons blockr.dplyr paid for (see `dev/perf-comparison-2026-04-18.md` there: eager metadata made a 50K-row board 5.6× slower to start; JSON serialization, not R compute, was the cost):
 
 - **Send light metadata eagerly, values lazily.** On data change push names/types/labels only; fetch a column's unique values on dropdown-open via a request message (`filter-column-values` + `setLoading`/`onOpen` on `Blockr.Select`).
-- **Cap what you render** (`maxRendered`, default 200) — and treat very-high-cardinality value lists as a server-side-search problem, not a payload.
+- **Cap what you render** (`maxRendered`, default 200) — and cap what you *send*: above a distinct-count threshold (`blockr.dplyr.max_filter_values`, default 1000) switch to server-side search. The server returns a capped page plus `total` and a sticky `truncated` flag; `Blockr.Select` enters search mode via `setSearchInfo()` and re-queries through its `onSearch` hook as the user types. Old servers that never send `truncated` keep the pure client-side behavior — the modes are wire-compatible. See `build_column_values(limit =, query =)` and the filter block's `_search_values` input for the reference wiring.
 - **Debounce submits** (300ms) so each keystroke doesn't re-evaluate the board.
 - **Bump the package `Version:` after editing `inst/js` or `inst/css`** — `htmlDependency` versions cache by package version; without a bump the browser keeps the old asset.
 
