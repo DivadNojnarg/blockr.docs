@@ -48,7 +48,10 @@ level order lives in the data as factors. Reference consumers:
 the JS payload), `blockr.ggplot/R/scale-map.R` (injects literal
 `scale_*_manual()` into the block expr — exported code reproduces the shown
 colors; only complete assignments, since `scale_*_manual()` errors on
-gaps), `blockr.pharma/R/viz-ae-gantt.R` (AE gantt). Cross-renderer demo:
+gaps), `blockr.pharma/R/viz-ae-gantt.R` + `viz-patient-overview.R` (the
+patient-profile block resolves the AESEV binding once and injects it as
+`settings$sev_colors` into both vizs, so they cannot disagree).
+Cross-renderer demo:
 `blockr.theme/dev/scale-map-demo.R` (echarts + ggplot, hex-identical).
 
 ## Authoring (template/study side)
