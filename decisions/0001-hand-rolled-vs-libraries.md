@@ -52,7 +52,7 @@ Cons of staying hand-rolled
 
   Swapping to Tom Select is a **net +9 to +21 KB gzipped**, not a replacement. This contradicts the blockr ecosystem's established direction of **removing dependencies to shrink the bundle**. The Bootstrap-disable experiment produced a measurable startup-time improvement; Selectize removal is the next target. Adding Tom Select moves us in the opposite direction.
 
-- **Migration labour:** ~3-4 focused days. ~50 call sites across `blockr.dplyr`, `blockr.dm`, `blockr.bi`, `blockr.extra`, `blockr.sandbox`. API shape differs (`ts.setValue` vs our `setOptions(opts, sel)`, render callbacks). Shiny binding wrapper rewritten.
+- **Migration labour:** ~3-4 focused days. ~50 call sites across `blockr.dplyr`, `blockr.dm`, `blockr.viz`, `blockr.extra`, `blockr.sandbox`. API shape differs (`ts.setValue` vs our `setOptions(opts, sel)`, render callbacks). Shiny binding wrapper rewritten.
 - **Visual drift risk:** Tom Select ships its own structural CSS. ~100 lines of override CSS to match blockr's design system — which can silently break on Tom Select minor-version updates. Same pattern that bit us with selectize.
 - **External dependency fragility:** selectize's own history (abandonment → community fork as Tom Select) can repeat. If it does, we swap again.
 - **Regression surface:** keyboard-nav semantics, focus management in Shiny's DOM lifecycle, block re-render behaviour — each difference from today's component is a testing and support cost.
