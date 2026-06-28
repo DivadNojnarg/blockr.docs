@@ -28,6 +28,8 @@ Rows typically have a fixed-width left column (150–160px) for the "key" (colum
 
 `.blockr-pill` is the 24px toggle/button used for e.g. op selectors (AND/OR, ascending/descending). 4px radius, small padding, hover lightens the background; the `.blockr-popover-toggle-active` modifier marks the current selection.
 
+**Label the meaning, not the mechanism.** A click-through pill cycles options in place, so its text must state what the *current setting means* — never a bare `On` / `Off`. Like `AND` / `OR` and `Ascending` / `Descending`, a binary feature toggle reads `Search bar` / `No search bar`, `Sortable` / `Not sortable`, `Collapsible` / `Not collapsible`. The row label names the dimension; the pill names the chosen state. `On`/`Off` forces the reader to remember which feature the row controls and which direction is which — the descriptive label is self-evident at a glance.
+
 ## Gear / popover
 
 ```
