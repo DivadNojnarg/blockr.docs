@@ -2,9 +2,18 @@
 
 Visual primitives and shared component specs for blockr's hand-rolled UI chrome.
 
+> **Two things live here — don't mix them up:**
+>
+> - **Status quo (this folder)** — the primitives and component specs *as
+>   currently implemented*. Reference docs for building UI today.
+> - **Target / the plan → [`target/`](./target/)** — the proposed consolidation:
+>   one token layer and one set of component classes owned by **blockr.ui**.
+>   Where we are moving *to*, not what ships today. Start at
+>   [`target/README.md`](./target/README.md).
+
 The canonical source lives in `blockr.dplyr/inst/` (`blockr-core.js`, `blockr-blocks.css`, `blockr-select.*`, `blockr-input.*`). Other packages copy these assets until they are extracted to `blockr.core`. Values below are snapshotted against `blockr.dplyr/dev/design-system.md` and the CSS files as of 2026-04-19.
 
-## Primitives
+## Primitives (status quo)
 
 - [colors.md](./colors.md) — greyscale, semantic colors, CSS variable names.
 - [typography.md](./typography.md) — font families, sizes, weights.

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gear panel — proposals for replacing the floating popover</title>
+<style>
+  /* ---- tokens (target set, see design-system.html) ---- */
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-600: #2563eb; --blockr-blue-700: #1d4ed8;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-normal: 400; --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-color-text-primary: var(--blockr-grey-900);
+    --blockr-color-text-secondary: var(--blockr-grey-700);
+    --blockr-color-text-muted: var(--blockr-grey-500);
+    --blockr-color-text-subtle: var(--blockr-grey-400);
+    --blockr-color-border: var(--blockr-grey-200);
+    --blockr-color-bg-input: var(--blockr-grey-50);
+    --blockr-color-bg-hover: var(--blockr-grey-100);
+    --blockr-color-primary: var(--blockr-blue-600);
+    --blockr-color-primary-bg: var(--blockr-blue-50);
+    --blockr-color-danger: #dc2626;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-radius-lg: 8px; --blockr-radius-md: 6px; --blockr-radius-sm: 4px;
+    --blockr-shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --blockr-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    --blockr-control-h: 42px; --blockr-control-h-sm: 30px; --blockr-control-h-xs: 26px;
+    --blockr-transition: 0.15s ease;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-color-text-primary); background: #fff; line-height: 1.55; }
+  main { max-width: 940px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-color-border); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: var(--blockr-radius-sm); padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-color-text-muted); margin-top: 0; }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-base { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: var(--blockr-radius-lg);
+           padding: 20px 22px; margin: 14px 0; background: #fff; max-width: 660px; }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .pros { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; margin: 10px 0 0; max-width: 660px; }
+  .pros ul { margin: 4px 0; padding-left: 18px; font-size: var(--blockr-font-size-sm); }
+  .pros .h { font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+             text-transform: uppercase; letter-spacing: 0.04em; }
+  .pros .h.good { color: #166534; } .pros .h.bad { color: #b91c1c; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: var(--blockr-font-weight-medium); color: var(--blockr-color-text-muted);
+       border-bottom: 1px solid var(--blockr-color-border); padding: 6px 10px 6px 0; font-size: var(--blockr-font-size-xs);
+       text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 7px 10px 7px 0; vertical-align: top; }
+  .callout { border-left: 3px solid var(--blockr-color-primary); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0; margin: 16px 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle); }
+  pre { background: var(--blockr-grey-50); border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-lg);
+        padding: 12px 16px; overflow-x: auto; font-size: 0.78rem; line-height: 1.5; }
+
+  /* ================================================================
+     VERBATIM component CSS from blockr.dplyr (subset the demos need)
+     ================================================================ */
+  .blockr-pill {
+    display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px;
+    height: 24px; min-width: 28px; font-size: 11px; font-weight: 500;
+    color: var(--blockr-grey-500, #6b7280); background: var(--blockr-grey-50, #f9fafb);
+    border: 1px solid var(--blockr-grey-200, #e5e7eb); border-radius: 4px; cursor: pointer;
+    user-select: none; white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .blockr-pill:hover { background: var(--blockr-grey-100); border-color: var(--blockr-grey-300); color: var(--blockr-grey-700); }
+  .blockr-row {
+    display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 5px 10px;
+    margin-bottom: 6px; background-color: var(--blockr-color-bg-input, #f9fafb);
+    border: 1px solid var(--blockr-color-border, #e5e7eb); border-radius: 8px; box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .blockr-row:focus-within { background-color: #fff; border-color: var(--blockr-color-primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .blockr-row-content { flex: 1; min-width: 0; position: relative; display: flex; align-items: center; }
+  .blockr-row-remove {
+    display: flex; align-items: center; justify-content: center; margin-left: auto; width: 26px; height: 26px;
+    background: none; border: none; border-radius: 4px; color: var(--blockr-grey-400); cursor: pointer;
+    opacity: 0; flex-shrink: 0; transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  .blockr-row:hover .blockr-row-remove { opacity: 1; }
+  .blockr-row-remove:hover { color: var(--blockr-color-danger); background: rgba(220,53,69,0.08); }
+  .blockr-label { font-size: 0.75rem; font-weight: 500; color: var(--blockr-grey-500); margin-bottom: 0.25rem; }
+  .blockr-add-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0;
+                    min-height: 30px; font-size: 13px; user-select: none; color: var(--blockr-grey-400); }
+  .blockr-add-link { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: color 0.15s ease; }
+  .blockr-add-link:hover { color: var(--blockr-color-primary); }
+  .blockr-add-icon { display: inline-flex; align-items: center; }
+  .blockr-gear-header { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 6px; }
+  .blockr-gear-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; flex-shrink: 0;
+    color: var(--blockr-grey-400); background: transparent; border: 1px solid var(--blockr-color-border);
+    border-radius: 4px; cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .blockr-gear-btn:hover { color: var(--blockr-color-primary); border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.04); }
+  .blockr-gear-btn.blockr-gear-active { color: var(--blockr-color-primary); border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.08); }
+  .blockr-popover {
+    position: absolute; right: 0; top: 32px; z-index: 1000; background: #fff;
+    border: 1px solid var(--blockr-color-border); border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 12px 14px; min-width: 280px;
+  }
+  .blockr-popover-row { margin-bottom: 10px; }
+  .blockr-popover-row:last-child { margin-bottom: 0; }
+  .blockr-popover-label { font-size: 0.75rem; font-weight: 500; color: var(--blockr-grey-500); margin-bottom: 0.25rem; }
+  .blockr-popover-input {
+    width: 100%; box-sizing: border-box; padding: 8px 12px; font-size: var(--blockr-font-size-base);
+    border: 1px solid var(--blockr-color-border); border-radius: 8px; background: var(--blockr-color-bg-input);
+    color: var(--blockr-color-text-primary); outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .blockr-popover-input:focus { background: #fff; border-color: var(--blockr-color-primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .blockr-popover-select-wrap { width: 100%; }
+  .blockr-popover-select-wrap .blockr-select__control {
+    background-color: var(--blockr-color-bg-input); border: 1px solid var(--blockr-color-border);
+    border-radius: 8px; padding: 6px 12px; min-height: 38px;
+  }
+  .blockr-popover-toggle { font-size: 11px !important; margin: 2px 4px 6px 0; }
+  .blockr-popover-toggle-active { color: var(--blockr-color-primary) !important; background: rgba(37,99,235,0.08) !important; border-color: rgba(37,99,235,0.2) !important; }
+  .blockr-text-input {
+    width: 100%; min-height: 42px; padding: 10px 14px; font-size: var(--blockr-font-size-base);
+    background-color: var(--blockr-color-bg-input); border: 1px solid var(--blockr-color-border);
+    border-radius: 8px; color: var(--blockr-color-text-primary); box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .blockr-text-input:focus { background: #fff; border-color: var(--blockr-color-primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
+  .blockr-text-input::placeholder { color: var(--blockr-grey-400); }
+  .blockr-num-input { height: 30px; padding: 4px 10px; font-size: var(--blockr-font-size-base); background: transparent;
+                      border: none; color: var(--blockr-color-text-primary); flex: 1; width: 100%; min-width: 60px; }
+  .blockr-num-input:focus { outline: none; }
+  .blockr-select { position: relative; display: inline-block; width: 100%; font-size: var(--blockr-font-size-base);
+                   font-family: inherit; line-height: 1.4; color: var(--blockr-color-text-primary); }
+  .blockr-select * { box-sizing: border-box; }
+  .blockr-select__control { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; min-height: 30px;
+                            padding: 0 6px; cursor: pointer; background: transparent; border: none; border-radius: 0; }
+  .blockr-select--bordered .blockr-select__control {
+    background-color: var(--blockr-color-bg-input); border: 1px solid var(--blockr-color-border);
+    border-radius: 8px; padding: 6px 12px; min-height: 42px;
+  }
+  .blockr-select__value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+  .blockr-select__arrow { flex-shrink: 0; display: flex; align-items: center; color: var(--blockr-grey-400); pointer-events: none; }
+  .blockr-select__opt-label { font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-500); margin-left: 8px; font-weight: 400; }
+  .fb-col-wrap { width: var(--fb-col-w, 160px); min-width: 120px; max-width: min(55%, 360px); flex-shrink: 0;
+                 border-right: 1px solid var(--blockr-color-border); padding-right: 8px; }
+
+  /* ================================================================
+     PROPOSED CSS — not shipped anywhere yet; one block per variant
+     ================================================================ */
+
+  /* B: full-width inline settings band — pushes content down */
+  .blockr-settings {
+    display: none;
+    border: 1px solid var(--blockr-color-border);
+    border-radius: var(--blockr-radius-lg);
+    padding: 12px 14px 8px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .blockr-settings--open { display: block; }
+  .blockr-settings__title {
+    font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+    color: var(--blockr-color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .blockr-settings__grid { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 12px; }
+  .blockr-settings__field { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; }
+  .blockr-settings__field--full { flex: 1 1 100%; }
+
+  /* C: full-width overlay — same band, floats over the content */
+  .blockr-settings--overlay {
+    position: absolute; left: 0; right: 0; top: 34px; z-index: 1000;
+    box-shadow: var(--blockr-shadow-dropdown);
+    margin-bottom: 0;
+  }
+  .has-overlay { position: relative; }
+
+  /* D: settings as plain rows behind a divider */
+  .blockr-settings-rows { display: none; }
+  .blockr-settings-rows--open { display: block; }
+  .blockr-settings-rows__divider {
+    display: flex; align-items: center; gap: 8px; margin: 10px 0 8px;
+    font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+    color: var(--blockr-color-text-subtle); text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .blockr-settings-rows__divider::before, .blockr-settings-rows__divider::after {
+    content: ""; flex: 1; border-top: 1px dashed var(--blockr-grey-300);
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Gear panel: same inputs, full width — four variants</h1>
+<p class="lede">Companion to <code>design-system.html</code> (§2.5, §3.4, drift #17). Question: should the gear popover keep its own control height (38px) and float in a 280px box — or reuse the exact controls of the normal block UI at full width, clearly separated? Every demo below is interactive: <strong>click the gear</strong>. All variants share one premise: <em>the 38px tier and the popover-specific input styles are deleted; settings use the same 42/30/26 controls as everything else.</em></p>
+
+<div class="callout">
+  <strong>Why the floating popover is fragile beyond styling:</strong> it's <code>position: absolute; z-index: 1000</code> inside dock panels — panels with their own stacking contexts and <code>overflow</code>, so a popover near a panel edge clips or lands under a neighboring card. An in-flow panel can't clip and needs no z-index at all. It also caps content at <code>min-width: 280px</code>, which is why it grew its own smaller 38px controls in the first place — width pressure created the extra height tier.
+</div>
+
+<!-- ============================================================ -->
+<h2>A — Current floating popover <span class="tag tag-base">baseline</span></h2>
+<p>Anchored top-right, 280px min-width, own input recipe (<code>.blockr-popover-input</code>, 38px selects). Note how it covers the block's rows when open — the context you were configuring disappears.</p>
+<div class="stage">
+  <div class="stage-label">pivot-wider block — click the gear</div>
+  <div style="position:relative">
+    <div class="blockr-gear-header"><button class="blockr-gear-btn blockr-gear-active" type="button" onclick="this.classList.toggle('blockr-gear-active');document.getElementById('pop-a').style.display=(document.getElementById('pop-a').style.display==='none'?'block':'none')"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div>
+    <div class="blockr-popover" id="pop-a">
+      <div class="blockr-popover-row"><div class="blockr-popover-label">Names prefix</div><input class="blockr-popover-input" value="value_" /></div>
+      <div class="blockr-popover-row"><div class="blockr-popover-label">Values fill</div><div class="blockr-popover-select-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">0</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div></div>
+      <div class="blockr-popover-row"><div class="blockr-popover-label">Options</div>
+        <button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button">drop NA</button><button class="blockr-pill blockr-popover-toggle" type="button">names repair</button><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button">sort</button>
+      </div>
+    </div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">names from</span></div></div></div>
+      <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Species</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+    </div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">values from</span></div></div></div>
+      <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Sepal.Length</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+    </div>
+  </div>
+</div>
+<div class="pros">
+  <div><div class="h good">Pros</div><ul><li>No layout shift when opened</li><li>Familiar (ships today)</li></ul></div>
+  <div><div class="h bad">Cons</div><ul><li>Covers the rows being configured</li><li>Clips / z-index fights inside dock panels</li><li>280px width pressure → bred the 38px control tier and a parallel input recipe (<code>.blockr-popover-input</code>)</li><li>Third input style to maintain</li></ul></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>B — Full-width inline band, pushes content down <span class="tag tag-rec">recommended</span></h2>
+<p>The gear expands a bordered, labeled band between the header and the block content — <strong>in flow</strong>, so rows slide down and stay visible. Controls are the standard ones: <code>.blockr-text-input</code> (42px), <code>--bordered</code> Select (42px), normal pills. Fields lay out with the flex-wrap idiom (<code>flex: 1 1 160px</code>), so the full width is actually used — settings sit side-by-side where the popover stacked them. Separation from block content = white bordered container + uppercase micro-label, against the grey rows.</p>
+<div class="stage">
+  <div class="stage-label">pivot-wider block — click the gear</div>
+  <div class="blockr-gear-header"><button class="blockr-gear-btn blockr-gear-active" type="button" onclick="this.classList.toggle('blockr-gear-active');document.getElementById('band-b').classList.toggle('blockr-settings--open')"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div>
+  <div class="blockr-settings blockr-settings--open" id="band-b">
+    <div class="blockr-settings__title">Settings</div>
+    <div class="blockr-settings__grid">
+      <div class="blockr-settings__field"><span class="blockr-label">Names prefix</span><input class="blockr-text-input" value="value_" /></div>
+      <div class="blockr-settings__field"><span class="blockr-label">Values fill</span><div class="blockr-select blockr-select--single blockr-select--bordered"><div class="blockr-select__control"><span class="blockr-select__value">0</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+      <div class="blockr-settings__field blockr-settings__field--full"><span class="blockr-label">Options</span>
+        <div><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button">drop NA</button><button class="blockr-pill blockr-popover-toggle" type="button">names repair</button><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button">sort</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="blockr-row">
+    <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">names from</span></div></div></div>
+    <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Species</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+  </div>
+  <div class="blockr-row">
+    <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">values from</span></div></div></div>
+    <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Sepal.Length</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+  </div>
+</div>
+<div class="pros">
+  <div><div class="h good">Pros</div><ul><li>Zero new input styles — 38px tier and <code>.blockr-popover-input</code> deleted</li><li>Block content stays visible below (the context argument)</li><li>Full width: fields side-by-side, scales to any number of settings</li><li>In flow: no clipping, no z-index, works in any dock panel</li><li>Reuses the flex-wrap responsive idiom — behaves in narrow panels</li></ul></div>
+  <div><div class="h bad">Cons</div><ul><li>Layout shift: rows jump down on open (mitigable with a 0.15s ease height transition)</li><li>Tall settings sets push content far down</li></ul></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>C — Full-width overlay band</h2>
+<p>Identical band and controls as B, but <code>position: absolute</code> under the header — full block width, floats over the rows. A middle ground: no layout shift, and full width kills the 38px tier, but it still covers content and still lives in z-index/overflow land.</p>
+<div class="stage">
+  <div class="stage-label">pivot-wider block — click the gear</div>
+  <div class="has-overlay">
+    <div class="blockr-gear-header"><button class="blockr-gear-btn blockr-gear-active" type="button" onclick="this.classList.toggle('blockr-gear-active');document.getElementById('band-c').classList.toggle('blockr-settings--open')"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div>
+    <div class="blockr-settings blockr-settings--overlay blockr-settings--open" id="band-c">
+      <div class="blockr-settings__title">Settings</div>
+      <div class="blockr-settings__grid">
+        <div class="blockr-settings__field"><span class="blockr-label">Names prefix</span><input class="blockr-text-input" value="value_" /></div>
+        <div class="blockr-settings__field"><span class="blockr-label">Values fill</span><div class="blockr-select blockr-select--single blockr-select--bordered"><div class="blockr-select__control"><span class="blockr-select__value">0</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+        <div class="blockr-settings__field blockr-settings__field--full"><span class="blockr-label">Options</span>
+          <div><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button">drop NA</button><button class="blockr-pill blockr-popover-toggle" type="button">names repair</button><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button">sort</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">names from</span></div></div></div>
+      <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Species</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+    </div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">values from</span></div></div></div>
+      <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Sepal.Length</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+    </div>
+  </div>
+</div>
+<div class="pros">
+  <div><div class="h good">Pros</div><ul><li>No layout shift</li><li>Full width — standard 42px controls fit, 38px tier still dies</li><li>One shared band component with B (just a <code>--overlay</code> modifier)</li></ul></div>
+  <div><div class="h bad">Cons</div><ul><li>Still covers the rows (worse than A — it covers <em>all</em> of them)</li><li>Still absolute + z-index inside dock panels (clipping risk stays)</li></ul></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>D — Settings are just rows</h2>
+<p>No panel at all: the gear reveals extra <code>.blockr-row</code>s behind a dashed "settings" divider, using the exact row anatomy of the block content (label column with divider border, embedded control). Maximal reuse — but settings now look <em>almost identical</em> to data configuration, and the dashed divider carries all the separation. Best for blocks with 1–3 simple settings.</p>
+<div class="stage">
+  <div class="stage-label">pivot-wider block — click the gear</div>
+  <div class="blockr-gear-header"><button class="blockr-gear-btn blockr-gear-active" type="button" onclick="this.classList.toggle('blockr-gear-active');document.getElementById('rows-d').classList.toggle('blockr-settings-rows--open')"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div>
+  <div class="blockr-row">
+    <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">names from</span></div></div></div>
+    <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Species</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+  </div>
+  <div class="blockr-row">
+    <div class="fb-col-wrap"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">values from</span></div></div></div>
+    <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">Sepal.Length</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+  </div>
+  <div class="blockr-settings-rows blockr-settings-rows--open" id="rows-d">
+    <div class="blockr-settings-rows__divider">settings</div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap" style="display:flex;align-items:center;min-height:30px"><span style="font-size:var(--blockr-font-size-sm)">names prefix</span></div>
+      <div class="blockr-row-content"><input class="blockr-num-input" value="value_" /></div>
+    </div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap" style="display:flex;align-items:center;min-height:30px"><span style="font-size:var(--blockr-font-size-sm)">values fill</span></div>
+      <div class="blockr-row-content"><div class="blockr-select blockr-select--single"><div class="blockr-select__control"><span class="blockr-select__value">0</span><span class="blockr-select__arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 4.5 6 7.5 9 4.5"></polyline></svg></span></div></div></div>
+    </div>
+    <div class="blockr-row">
+      <div class="fb-col-wrap" style="display:flex;align-items:center;min-height:30px"><span style="font-size:var(--blockr-font-size-sm)">options</span></div>
+      <div class="blockr-row-content"><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button" style="margin-bottom:2px">drop NA</button><button class="blockr-pill blockr-popover-toggle" type="button" style="margin-bottom:2px">names repair</button><button class="blockr-pill blockr-popover-toggle blockr-popover-toggle-active" type="button" style="margin-bottom:2px">sort</button></div>
+    </div>
+  </div>
+</div>
+<div class="pros">
+  <div><div class="h good">Pros</div><ul><li>Zero new components — 100% existing row anatomy</li><li>In flow: no clipping, no z-index</li><li>Settings read in the same visual language as the block</li></ul></div>
+  <div><div class="h bad">Cons</div><ul><li>Settings ≈ data rows: only a dashed divider separates concerns — easy to mistake a setting for a condition</li><li>One row per setting: vertical, doesn't use width; tall for many settings</li><li>Settings after content (below) — B shows them above, nearer the gear</li></ul></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Comparison &amp; recommendation</h2>
+<table>
+  <tr><th></th><th>A popover (today)</th><th>B inline band</th><th>C overlay band</th><th>D plain rows</th></tr>
+  <tr><td>Standard controls (kills 38px tier + popover input recipe)</td><td>no</td><td><strong>yes</strong></td><td><strong>yes</strong></td><td><strong>yes</strong></td></tr>
+  <tr><td>Block content stays visible while configuring</td><td>partially covered</td><td><strong>yes</strong></td><td>covered</td><td><strong>yes</strong></td></tr>
+  <tr><td>Safe inside dock panels (no clip / z-index)</td><td>no</td><td><strong>yes</strong></td><td>no</td><td><strong>yes</strong></td></tr>
+  <tr><td>Uses full block width</td><td>no (280px)</td><td><strong>yes</strong></td><td><strong>yes</strong></td><td>vertical only</td></tr>
+  <tr><td>No layout shift on open</td><td><strong>yes</strong></td><td>no (rows slide down)</td><td><strong>yes</strong></td><td>no</td></tr>
+  <tr><td>Settings clearly distinct from data config</td><td><strong>yes</strong> (floats)</td><td><strong>yes</strong> (bordered + labeled band)</td><td><strong>yes</strong></td><td>weak (dashed divider only)</td></tr>
+  <tr><td>New CSS to maintain</td><td>~60 lines popover styles</td><td>~25 lines band</td><td>B + 6 lines</td><td>~10 lines divider</td></tr>
+</table>
+
+<p><strong>Recommendation: B</strong> — the full-width inline band. It's the only variant that scores on every axis except layout shift, and the shift is the <em>point</em>: "push the content down" keeps the rows you're configuring on screen, which is the context argument in favor of the gear pattern in the first place. The band is one small component (<code>.blockr-settings</code>, ~25 lines) that deletes three things: the 38px height tier, <code>.blockr-popover-input</code>, and the absolute-positioning machinery. Soften the shift with a <code>0.15s ease</code> max-height transition (the sanctioned motion token). Keep <code>--overlay</code> (variant C) as a cheap modifier for the rare dense-dashboard case where shift is unacceptable — same markup, same controls, one class.</p>
+<p>If B is adopted, the token outcome in <code>design-system.html</code> §2.5 simplifies further: the 42/30/26 ladder holds with <em>no popover exception at all</em>, and drift #17's "38px" row closes as "deleted, not folded". The <code>.blockr-popover</code> component itself stays only if something genuinely needs an anchored floater (e.g. the gear menu of a table header cell) — it should then contain menu items, never form controls.</p>
+
+<p class="hint" style="margin-top:36px">Companion to <code>design-system.html</code>. All demos use the verbatim shipped CSS for existing components; the <code>.blockr-settings*</code> styles are the proposal. Interactive: gears toggle their panels.</p>
+
+</main>
+</body>
+</html>

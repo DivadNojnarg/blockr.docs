@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boolean controls — checkbox / switch / pill: which means what</title>
+<style>
+  /* ---- tokens (target set, see design-system.html) ---- */
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-600: #2563eb; --blockr-blue-700: #1d4ed8;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-normal: 400; --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-color-text-primary: var(--blockr-grey-900);
+    --blockr-color-text-secondary: var(--blockr-grey-700);
+    --blockr-color-text-muted: var(--blockr-grey-500);
+    --blockr-color-text-subtle: var(--blockr-grey-400);
+    --blockr-color-border: var(--blockr-grey-200);
+    --blockr-color-bg-input: var(--blockr-grey-50);
+    --blockr-color-bg-hover: var(--blockr-grey-100);
+    --blockr-color-primary: var(--blockr-blue-600);
+    --blockr-color-primary-bg: var(--blockr-blue-50);
+    --blockr-color-danger: #dc2626;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-radius-lg: 8px; --blockr-radius-md: 6px; --blockr-radius-sm: 4px;
+    --blockr-shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --blockr-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    --blockr-control-h: 42px; --blockr-control-h-sm: 30px; --blockr-control-h-xs: 26px;
+    --blockr-transition: 0.15s ease;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-color-text-primary); background: #fff; line-height: 1.55; }
+  main { max-width: 940px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-color-border); }
+  h3 { font-size: 1rem; font-weight: var(--blockr-font-weight-medium); color: var(--blockr-color-text-secondary); margin: 26px 0 8px; }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: var(--blockr-radius-sm); padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-color-text-muted); margin-top: 0; }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-dep { background: #fee2e2; color: #b91c1c; }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: var(--blockr-radius-lg);
+           padding: 18px 22px; margin: 14px 0; background: #fff; max-width: 720px; }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: var(--blockr-font-weight-medium); color: var(--blockr-color-text-muted);
+       border-bottom: 1px solid var(--blockr-color-border); padding: 6px 12px 6px 0; font-size: var(--blockr-font-size-xs);
+       text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 8px 12px 8px 0; vertical-align: top; }
+  .callout { border-left: 3px solid var(--blockr-color-primary); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0; margin: 16px 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle); }
+  pre { background: var(--blockr-grey-50); border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-lg);
+        padding: 12px 16px; overflow-x: auto; font-size: 0.78rem; line-height: 1.5; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; max-width: 720px; }
+  .cols.two { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 720px) { .cols, .cols.two { grid-template-columns: 1fr; } }
+
+  /* ---- verbatim bits reused for context (pill, row, label) ---- */
+  .blockr-pill {
+    display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px;
+    height: 24px; min-width: 28px; font-size: 11px; font-weight: 500;
+    color: var(--blockr-grey-500); background: var(--blockr-grey-50);
+    border: 1px solid var(--blockr-grey-200); border-radius: 4px; cursor: pointer;
+    user-select: none; white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .blockr-pill:hover { background: var(--blockr-grey-100); border-color: var(--blockr-grey-300); color: var(--blockr-grey-700); }
+  .blockr-pill--active { color: var(--blockr-color-primary); background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2); }
+  .blockr-label { font-size: 0.75rem; font-weight: 500; color: var(--blockr-grey-500); margin-bottom: 0.25rem; }
+  .blockr-row { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 5px 10px; margin-bottom: 6px;
+                background-color: var(--blockr-color-bg-input); border: 1px solid var(--blockr-color-border);
+                border-radius: 8px; }
+  .blockr-add-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0;
+                    min-height: 30px; font-size: 13px; user-select: none; color: var(--blockr-grey-400); }
+  .blockr-add-link { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .blockr-add-link:hover { color: var(--blockr-color-primary); }
+
+  /* ================================================================
+     PROPOSED: .blockr-checkbox
+     16px box (radius-sm), primary fill when checked, 13px label,
+     26px (--blockr-control-h-xs) min hit height, token focus ring.
+     ================================================================ */
+  .blockr-checkbox {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-700);
+    min-height: var(--blockr-control-h-xs); user-select: none; position: relative;
+  }
+  .blockr-checkbox input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .blockr-checkbox__box {
+    width: 16px; height: 16px; flex-shrink: 0;
+    border: 1px solid var(--blockr-grey-300); border-radius: var(--blockr-radius-sm);
+    background: #fff; display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; transition: background var(--blockr-transition), border-color var(--blockr-transition);
+  }
+  .blockr-checkbox:hover .blockr-checkbox__box { border-color: var(--blockr-grey-400); }
+  .blockr-checkbox input:checked + .blockr-checkbox__box {
+    background: var(--blockr-color-primary); border-color: var(--blockr-color-primary);
+  }
+  .blockr-checkbox input:focus-visible + .blockr-checkbox__box { box-shadow: var(--blockr-focus-ring); }
+  .blockr-checkbox__box svg { opacity: 0; transform: scale(0.5); transition: opacity var(--blockr-transition), transform var(--blockr-transition); }
+  .blockr-checkbox input:checked + .blockr-checkbox__box svg { opacity: 1; transform: scale(1); }
+
+  /* ================================================================
+     PROPOSED: .blockr-switch
+     30×18 pill track, 14px knob, primary when on, 26px hit height.
+     Reserved for MODES (see decision rules).
+     ================================================================ */
+  .blockr-switch {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-700);
+    min-height: var(--blockr-control-h-xs); user-select: none; position: relative;
+  }
+  .blockr-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .blockr-switch__track {
+    width: 30px; height: 18px; flex-shrink: 0; border-radius: 999px;
+    background: var(--blockr-grey-300); position: relative;
+    transition: background var(--blockr-transition);
+  }
+  .blockr-switch__track::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+    border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    transition: left var(--blockr-transition);
+  }
+  .blockr-switch:hover .blockr-switch__track { background: var(--blockr-grey-400); }
+  .blockr-switch input:checked + .blockr-switch__track { background: var(--blockr-color-primary); }
+  .blockr-switch input:checked + .blockr-switch__track::after { left: 14px; }
+  .blockr-switch input:checked ~ .blockr-switch__track:hover,
+  .blockr-switch:hover input:checked + .blockr-switch__track { background: var(--blockr-blue-700); }
+  .blockr-switch input:focus-visible + .blockr-switch__track { box-shadow: var(--blockr-focus-ring); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Boolean controls: checkbox, switch, or pill?</h1>
+<p class="lede">Companion to <code>design-system.html</code> (§3.5, drift #14/#15). Finding: the system has <em>no</em> checkboxes or switches — every boolean is a click-through pill, including plain on/off options where a pill hides its own state semantics. This document proposes real <code>.blockr-checkbox</code> and <code>.blockr-switch</code> components (all demos below are live — click them) and, more importantly, <strong>the rule for which control means what</strong>, so all three can coexist without ambiguity.</p>
+
+<div class="callout">
+  <strong>The diagnosis:</strong> pills are excellent when the label <em>is the value</em> (AND/OR, asc/desc, n/%) or when space is the binding constraint — and overused everywhere else. A self-labeling on/off pill ("drop NA") has a readability flaw: an inactive pill and an active pill both just say "drop NA"; the state lives only in a subtle tint. A checkbox says the same thing with an unambiguous state indicator that every user already knows how to read.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 — The decision rule <span class="tag tag-rec">proposal</span></h2>
+<p>One sentence per control, chosen by <em>what the label is</em>, not by taste:</p>
+<table>
+  <tr><th>Control</th><th>The label is…</th><th>Use for</th><th>Examples</th></tr>
+  <tr>
+    <td><strong>Pill</strong> (cycling / segmented)</td>
+    <td>…the <strong>value itself</strong> of a small enum</td>
+    <td>2–4 short data-like values you flip between; also the escape hatch when inline space is the binding constraint (inside a 42px row)</td>
+    <td>AND / OR &middot; asc / desc &middot; n / % &middot; operator <code>is</code>/<code>&gt;</code>/<code>&le;</code></td>
+  </tr>
+  <tr>
+    <td><strong>Checkbox</strong></td>
+    <td>…a <strong>description of an option</strong> you include or not</td>
+    <td>On/off <em>data options</em>, especially lists of independent booleans in the settings band — the default boolean control</td>
+    <td>drop NA &middot; names repair &middot; sort &middot; remove input cols &middot; na_rm &middot; preserve order</td>
+  </tr>
+  <tr>
+    <td><strong>Switch</strong></td>
+    <td>…a <strong>mode</strong> of the surface itself</td>
+    <td>Chrome/UI-level state with an immediately visible behavioral flip; at most one or two per surface, never in option lists</td>
+    <td>live preview on/off &middot; lock block &middot; show issues &middot; edit mode</td>
+  </tr>
+</table>
+<p>Shorthand: <strong>values → pill, data options → checkbox, UI modes → switch.</strong> The pattern that dies: the self-labeling on/off pill (<code>.blockr-popover-toggle-active</code>, <code>.sb-toggle-active</code>, <code>.fb-preserve-active</code>, unite's toggles) <span class="tag tag-dep">deprecate</span> — every one of those is a data option, i.e. a checkbox.</p>
+
+<!-- ============================================================ -->
+<h2>2 — The proposed components (live)</h2>
+<div class="cols two">
+  <div class="stage" style="max-width:none">
+    <div class="stage-label">.blockr-checkbox — 16px box, radius-sm, primary when checked, 13px label, 26px hit area</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <label class="blockr-checkbox"><input type="checkbox" checked /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>drop NA</label>
+      <label class="blockr-checkbox"><input type="checkbox" /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>names repair</label>
+      <label class="blockr-checkbox"><input type="checkbox" checked /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>sort columns</label>
+    </div>
+    <p class="hint" style="margin-bottom:0">State is structural (box fills), not a tint on the label. Native <code>&lt;input&gt;</code> under the hood: keyboard, forms, a11y for free. Uses only existing tokens — radius-sm, primary, grey-300/400, focus ring, control-h-xs, transition.</p>
+  </div>
+  <div class="stage" style="max-width:none">
+    <div class="stage-label">.blockr-switch — 30×18 track, 14px knob, primary when on. Reserved for modes</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <label class="blockr-switch"><input type="checkbox" checked /><span class="blockr-switch__track"></span>Live preview</label>
+      <label class="blockr-switch"><input type="checkbox" /><span class="blockr-switch__track"></span>Lock block</label>
+      <label class="blockr-switch"><input type="checkbox" /><span class="blockr-switch__track"></span>Show issues</label>
+    </div>
+    <p class="hint" style="margin-bottom:0">Visually heavier than a checkbox on purpose — it signals "this flips how the surface behaves right now". Scarcity is part of the design: if a panel needs five switches, they were checkboxes. Also the natural restyle target for bslib's <code>input_switch</code> (block card header) — closing drift #15.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>3 — Same settings, three renderings (judge for yourself)</h2>
+<p>The gear-band "Options" group from <code>gear-panel-proposals.html</code>, rendered three ways:</p>
+<div class="cols">
+  <div class="stage" style="max-width:none">
+    <div class="stage-label">Today: self-labeling pills <span class="tag tag-dep" style="font-size:0.6rem">deprecate</span></div>
+    <span class="blockr-label" style="display:block">Options</span>
+    <button class="blockr-pill blockr-pill--active" type="button" style="margin:2px 4px 2px 0">drop NA</button><button class="blockr-pill" type="button" style="margin:2px 4px 2px 0">names repair</button><button class="blockr-pill blockr-pill--active" type="button" style="margin:2px 4px 2px 0">sort</button>
+    <p class="hint" style="margin-bottom:0">Which are on? You must decode the tint. Off-state and on-state show identical text.</p>
+  </div>
+  <div class="stage" style="max-width:none">
+    <div class="stage-label">Proposed: checkboxes <span class="tag tag-rec" style="font-size:0.6rem">recommended</span></div>
+    <span class="blockr-label" style="display:block">Options</span>
+    <div style="display:flex;flex-direction:column">
+      <label class="blockr-checkbox"><input type="checkbox" checked /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>drop NA</label>
+      <label class="blockr-checkbox"><input type="checkbox" /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>names repair</label>
+      <label class="blockr-checkbox"><input type="checkbox" checked /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>sort</label>
+    </div>
+    <p class="hint" style="margin-bottom:0">State readable at a glance; scales to N options; scannable as a column.</p>
+  </div>
+  <div class="stage" style="max-width:none">
+    <div class="stage-label">Alternative: switches (rejected here)</div>
+    <span class="blockr-label" style="display:block">Options</span>
+    <div style="display:flex;flex-direction:column">
+      <label class="blockr-switch"><input type="checkbox" checked /><span class="blockr-switch__track"></span>drop NA</label>
+      <label class="blockr-switch"><input type="checkbox" /><span class="blockr-switch__track"></span>names repair</label>
+      <label class="blockr-switch"><input type="checkbox" checked /><span class="blockr-switch__track"></span>sort</label>
+    </div>
+    <p class="hint" style="margin-bottom:0">Readable too, but heavy: a column of switches over-promises — these are quiet data options, not three independent live modes. Reserve the switch's visual weight.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>4 — Where pills remain correct (and where the checkbox goes inline)</h2>
+<p>Pills keep the enum jobs. The filter footer shows both worlds coexisting under the rule — the AND/OR <em>value</em> pill stays, the "preserve order" <em>option</em> becomes a checkbox:</p>
+<div class="stage">
+  <div class="stage-label">filter block footer — after the rule is applied</div>
+  <div class="blockr-row">
+    <span style="width:150px;border-right:1px solid var(--blockr-color-border);padding-right:8px;font-size:var(--blockr-font-size-base)">Species</span>
+    <button class="blockr-pill" type="button">is</button>
+    <span style="flex:1;font-size:var(--blockr-font-size-base)">setosa</span>
+  </div>
+  <div class="blockr-add-row">
+    <span style="display:inline-flex;align-items:center;gap:10px">
+      <span class="blockr-add-link"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/></svg> Add condition</span>
+      <button class="blockr-pill" type="button" style="text-transform:uppercase;letter-spacing:.05em">and</button>
+    </span>
+    <label class="blockr-checkbox"><input type="checkbox" /><span class="blockr-checkbox__box"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg></span>preserve order</label>
+  </div>
+</div>
+<p>Note the AND/OR pill and the operator pill read naturally as values you flip; the checkbox reads as an option you include. The mixed footer is <em>less</em> ambiguous than today's all-pill version, because the two visual languages now carry different meanings. Where a checkbox genuinely doesn't fit inline (a cramped 42px row), the rule's escape hatch applies — a pill is acceptable when space is the binding constraint — but that should be the documented exception, not the default.</p>
+
+<!-- ============================================================ -->
+<h2>5 — Migration map &amp; Bootstrap parity</h2>
+<table>
+  <tr><th>Today</th><th>Kind</th><th>Becomes</th></tr>
+  <tr><td><code>.blockr-popover-toggle(-active)</code> — gear options (drop NA, sort, …)</td><td>data option</td><td><strong>checkbox</strong></td></tr>
+  <tr><td><code>.sb-toggle(-active)</code> — select/unite (remove input cols, na_rm, remove)</td><td>data option</td><td><strong>checkbox</strong></td></tr>
+  <tr><td><code>.fb-preserve-btn(-active)</code> — filter preserve order</td><td>data option</td><td><strong>checkbox</strong></td></tr>
+  <tr><td><code>.fb-op-toggle</code> AND/OR, <code>.fb-op-btn</code> operator, <code>.ab-dir-btn</code> asc/desc, <code>.slb-mode-pill</code> n/%</td><td>enum value</td><td><strong>pill</strong> (unchanged; gains shared <code>.blockr-pill--active</code> where a selected state exists)</td></tr>
+  <tr><td>bslib <code>input_switch</code> in the block card (blockr.core), any board-level toggles</td><td>UI mode</td><td><strong>switch</strong> — restyle <code>.form-switch</code> to the <code>.blockr-switch</code> recipe so both render identically (closes drift #15)</td></tr>
+  <tr><td>Bootstrap <code>.form-check</code> (R-driven blocks, board options accordion)</td><td>data option</td><td>restyle to the <code>.blockr-checkbox</code> recipe (same 16px box, radius-sm, primary fill)</td></tr>
+</table>
+<p>Both components ship in blockr.ui next to Select/Input: <code>blockr-forms.css</code> + tiny factories in <code>blockr-core.js</code> (<code>Blockr.checkbox(label, checked, onChange)</code> / <code>Blockr.toggleSwitch(…)</code>), plus a <code>.form-check/.form-switch</code> override section in <code>blockr-base.css</code> so the Bootstrap side matches without R code changes. Everything above uses only existing tokens — no new primitive values were introduced (16px box and 30×18 track are component internals, like the Select tag's 16px remove button).</p>
+
+<div class="callout">
+  <strong>Recommendation:</strong> adopt <em>both</em>, with the rule from §1 written into the design system: <strong>values → pill, data options → checkbox, UI modes → switch</strong>. In practice that makes the checkbox the workhorse (it replaces every self-labeling on/off pill), keeps pills exactly where they shine (enums + tight inline spots), and holds the switch in reserve for the few chrome-level modes — its rarity is what keeps it meaningful. If only one new control is adopted, make it the checkbox; the switch can follow when a real mode-toggle use case lands in blockr.ui chrome.
+</div>
+
+<p class="hint" style="margin-top:36px">Companion to <code>design-system.html</code> and <code>gear-panel-proposals.html</code>. The <code>.blockr-checkbox</code> / <code>.blockr-switch</code> styles are proposals (not shipped); pills/rows use the shipped CSS. All controls are live.</p>
+
+</main>
+</body>
+</html>

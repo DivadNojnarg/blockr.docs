@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text fields — when does the value apply? (debounce vs blur/Enter vs confirm)</title>
+<style>
+  /* ---- tokens (target set, see design-system.html) ---- */
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-600: #2563eb; --blockr-blue-700: #1d4ed8;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-normal: 400; --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-color-text-primary: var(--blockr-grey-900);
+    --blockr-color-text-muted: var(--blockr-grey-500);
+    --blockr-color-text-subtle: var(--blockr-grey-400);
+    --blockr-color-border: var(--blockr-grey-200);
+    --blockr-color-bg-input: var(--blockr-grey-50);
+    --blockr-color-primary: var(--blockr-blue-600);
+    --blockr-color-danger: #dc2626;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-radius-lg: 8px; --blockr-radius-md: 6px; --blockr-radius-sm: 4px;
+    --blockr-transition: 0.15s ease;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-color-text-primary); background: #fff; line-height: 1.55; }
+  main { max-width: 940px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-color-border); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: var(--blockr-radius-sm); padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-color-text-muted); margin-top: 0; }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-base { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .tag-keep { background: #fef3c7; color: #92400e; }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: var(--blockr-radius-lg);
+           padding: 18px 22px; margin: 14px 0; background: #fff; max-width: 720px; }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: var(--blockr-font-weight-medium); color: var(--blockr-color-text-muted);
+       border-bottom: 1px solid var(--blockr-color-border); padding: 6px 12px 6px 0; font-size: var(--blockr-font-size-xs);
+       text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 8px 12px 8px 0; vertical-align: top; }
+  .callout { border-left: 3px solid var(--blockr-color-primary); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0; margin: 16px 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle); }
+
+  /* ---- verbatim blockr.dplyr bits the demos need ---- */
+  .blockr-row { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 5px 10px;
+                margin-bottom: 6px; background-color: var(--blockr-color-bg-input);
+                border: 1px solid var(--blockr-color-border); border-radius: 8px;
+                transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+  .blockr-row:focus-within { background-color: #fff; border-color: var(--blockr-color-primary);
+                             box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .rb-col-wrap { width: 150px; flex-shrink: 0; border-right: 1px solid var(--blockr-color-border);
+                 padding-right: 8px; font-size: var(--blockr-font-size-base); }
+  .rb-arrow { flex-shrink: 0; color: var(--blockr-grey-400); font-size: 14px; padding: 0 2px; }
+  .rb-name-input { flex: 1; min-width: 80px; height: 30px; padding: 4px 10px;
+                   font-size: var(--blockr-font-size-base); background: transparent; border: none;
+                   color: var(--blockr-color-text-primary); font-family: inherit; }
+  .rb-name-input:focus { outline: none; }
+  .blockr-expr-confirm { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; height: 24px;
+                         background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.3); border-radius: 4px;
+                         color: var(--blockr-color-primary); cursor: pointer; flex-shrink: 0;
+                         font-size: 10px; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap;
+                         transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease; }
+  .blockr-expr-confirm:hover { background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.5); }
+  .blockr-expr-confirm.confirmed { background: none; border-color: transparent;
+                                   color: var(--blockr-grey-400); opacity: 0.5; }
+
+  /* ---- demo-only: the mock downstream panel ---- */
+  .downstream { display: flex; align-items: center; gap: 14px; margin-top: 10px;
+                border: 1px solid var(--blockr-grey-100); background: var(--blockr-grey-50);
+                border-radius: var(--blockr-radius-md); padding: 8px 14px;
+                font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-500); }
+  .downstream .col { font-family: var(--blockr-font-mono); color: var(--blockr-color-text-primary);
+                     background: #fff; border: 1px solid var(--blockr-color-border);
+                     border-radius: var(--blockr-radius-sm); padding: 2px 8px; }
+  .downstream .count { margin-left: auto; font-size: var(--blockr-font-size-xs); }
+  .downstream .count b { color: var(--blockr-color-danger); font-size: 1rem; }
+  .downstream.flash { animation: ds-flash 0.45s ease; }
+  @keyframes ds-flash { 0% { background: #fee2e2; border-color: #fca5a5; } 100% { background: var(--blockr-grey-50); } }
+
+  /* proposal B: subtle pending cue (optional refinement) */
+  .pending-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blockr-blue-600);
+                 flex-shrink: 0; opacity: 0; transition: opacity 0.15s ease; }
+  .pending .pending-dot { opacity: 0.8; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Text fields: when does typing become the pipeline's truth?</h1>
+<p class="lede">Companion #4 to <code>design-system.html</code>. Expression editors (Blockr.Input) commit on explicit confirm — that's settled: half-typed code is a parse error. The open decision is <strong>plain free-text fields</strong> (rename's new name, mutate's column name, unite/separate names, the gear band's prefixes and labels). Today they auto-submit per keystroke (300ms debounce). Type in each demo below — the red counter is a mock "downstream pipeline" that recomputes on every commit, so you can <em>feel</em> the difference. The demo row is the rename block: <code>bill_len → …</code>.</p>
+
+<!-- ============================================================ -->
+<h2>A — Today: 300ms debounce per keystroke <span class="tag tag-base">status quo</span></h2>
+<p>Every pause &gt;300ms while typing commits the value and recomputes everything downstream. Type <code>body_mass_corrected</code> at normal speed and watch the counter: each burst of typing costs a recompute, and downstream sees the half-typed names (<code>body_ma</code>…).</p>
+<div class="stage">
+  <div class="stage-label">rename block — type a new name</div>
+  <div class="blockr-row">
+    <span class="rb-col-wrap">bill_len</span><span class="rb-arrow">→</span>
+    <input class="rb-name-input" id="in-a" placeholder="new_name" value="bill_length" />
+  </div>
+  <div class="downstream" id="ds-a"><span>downstream sees column:</span><span class="col" id="col-a">bill_length</span><span class="count">recomputes: <b id="n-a">0</b></span></div>
+</div>
+<p><strong>Feel:</strong> zero friction, but the pipeline churns while you think. On a large board each of those recomputes is a real dplyr cascade + re-render — and downstream blocks referencing the final name break-then-heal mid-typing.</p>
+
+<!-- ============================================================ -->
+<h2>B — Commit on blur or Enter <span class="tag tag-rec">recommended</span></h2>
+<p><strong>No new chrome at all — the row looks identical to A.</strong> The only change is <em>when</em> the value ships: when you press <kbd>Enter</kbd> or click/tab away from the field (blur). While the field still has focus, nothing fires. Type the same name, then hit Enter (or click anywhere outside): exactly one recompute, with the final name.</p>
+<div class="stage">
+  <div class="stage-label">rename block — type, then Enter or click away</div>
+  <div class="blockr-row" id="row-b">
+    <span class="rb-col-wrap">bill_len</span><span class="rb-arrow">→</span>
+    <input class="rb-name-input" id="in-b" placeholder="new_name" value="bill_length" />
+    <span class="pending-dot" title="edited, not applied yet"></span>
+  </div>
+  <div class="downstream" id="ds-b"><span>downstream sees column:</span><span class="col" id="col-b">bill_length</span><span class="count">recomputes: <b id="n-b">0</b></span></div>
+</div>
+<p><strong>Feel:</strong> "done typing → applies". The interaction grammar is the one every spreadsheet and form uses, so nobody has to learn it. The one caveat: while the field has focus there is <em>no visual signal</em> that the shown value isn't applied yet — you type, glance at the output, and it hasn't moved. The demo includes the cheap mitigation: a small blue <strong>pending dot</strong> that appears while the value is edited-but-uncommitted and disappears on commit. That dot is the entire extra UI; it is optional.</p>
+
+<!-- ============================================================ -->
+<h2>C — Explicit confirm button (the expression pattern, extended)</h2>
+<p><strong>Same commit timing as B</strong> (nothing fires while you type) <strong>plus a button</strong>: the mutate-style "Enter ↵" appears armed while the value is dirty; clicking it (or pressing Enter) commits, then it collapses to a faded ✓. Blur does <em>not</em> commit — the button is the contract. Type and watch the button arm; commit and watch it confirm.</p>
+<div class="stage">
+  <div class="stage-label">rename block — type, then click "Enter ↵" (or press Enter)</div>
+  <div class="blockr-row">
+    <span class="rb-col-wrap">bill_len</span><span class="rb-arrow">→</span>
+    <input class="rb-name-input" id="in-c" placeholder="new_name" value="bill_length" />
+    <button class="blockr-expr-confirm confirmed" id="btn-c" type="button">✓</button>
+  </div>
+  <div class="downstream" id="ds-c"><span>downstream sees column:</span><span class="col" id="col-c">bill_length</span><span class="count">recomputes: <b id="n-c">0</b></span></div>
+</div>
+<p><strong>Feel:</strong> maximally explicit — the dirty state is always visible and nothing ever ships without your say-so. The costs: one more button on <em>every</em> text row (the rename block would carry one per rename), one more required click for the mouse-driven user, and it dilutes the design-system meaning of "Enter ↵", which today signals <em>code being applied</em> — a strong affordance worth reserving.</p>
+
+<!-- ============================================================ -->
+<h2>So what is actually different between B and C?</h2>
+<p>They share the important half: <strong>neither commits per keystroke</strong>. They differ only in the contract for the final commit:</p>
+<table>
+  <tr><th></th><th>A debounce (today)</th><th>B blur/Enter</th><th>C confirm button</th></tr>
+  <tr><td>Commits while typing</td><td>yes (every 300ms pause)</td><td>no</td><td>no</td></tr>
+  <tr><td>Commit trigger</td><td>time</td><td>Enter <em>or</em> leaving the field</td><td>Enter <em>or</em> clicking the button — blur alone does nothing</td></tr>
+  <tr><td>Can you forget to commit?</td><td>impossible</td><td>practically no — you always leave the field eventually</td><td>yes — walk away with the button armed and the edit never applies</td></tr>
+  <tr><td>Visible dirty state</td><td>none (nothing is ever pending)</td><td>none by default; optional pending dot</td><td>always (armed button)</td></tr>
+  <tr><td>Extra chrome per field</td><td>0</td><td>0 (dot optional)</td><td>1 button</td></tr>
+  <tr><td>Downstream churn while typing</td><td>high</td><td>none</td><td>none</td></tr>
+  <tr><td>Interaction grammar</td><td>"live"</td><td>spreadsheet / form field</td><td>code editor (the Blockr.Input pattern)</td></tr>
+</table>
+
+<div class="callout">
+  <strong>DECIDED (2026-07-02):</strong> B and C share the commit timing; the meaningful difference is the affordance — and <em>showing the key teaches the gesture</em>. So plain text fields get <strong>B's timing wearing C's Enter cue</strong>: nothing commits per keystroke; <kbd style="font-family:var(--blockr-font-mono);font-size:0.85em;background:var(--blockr-grey-100);border:1px solid var(--blockr-grey-300);border-bottom-width:2px;border-radius:4px;padding:0 5px">Enter</kbd> commits; blur also commits (B's safety net — C's forget-to-commit failure mode disappears); while dirty, the field shows the Enter chip instead of the anonymous pending dot. The chip follows the keystroke-label rules (design-system.html §5.5):
+  <br><br>
+  <span style="display:inline-flex;align-items:center;gap:14px">
+    <button class="blockr-expr-confirm" type="button" title="Apply (Enter)">Enter <span style="opacity:.55">↵</span></button>
+    <span class="hint">room available: verb + muted ↵ glyph</span>
+    <button class="blockr-expr-confirm" type="button" title="Apply (Enter)" style="min-width:24px;padding:2px 6px">↵</button>
+    <span class="hint">compact inline: bare ↵ chip — licensed by the spelled-out <code>title</code> tooltip</span>
+  </span>
+  <br><br>
+  The glyph is <strong>↵ (U+21B5)</strong> everywhere — the established house glyph (mutate's "Enter ↵", blockr.extra's "Run ↵" + <code>title="Run (⌘/Ctrl + Enter)"</code>), the most robust cross-font rendering (⏎ U+23CE, the ISO keycap symbol, varies by typeface — it even fails to render in some system fonts; ↩ U+21A9 is Apple's Return). Expression editors keep their confirm as-is — same visual family, so the two commit models now read identically. Implementation pending; the current debounce (A) still ships until the blocks are migrated.
+</div>
+
+<p class="hint" style="margin-top:36px">Companion to <code>design-system.html</code> (decided proposals live in <code>archive/</code>). Rows/inputs/confirm use the verbatim blockr.dplyr CSS; the downstream panel and pending dot are demo chrome. All three demos are live. This document retires to the archive once the Enter/blur commit behavior ships in the blocks.</p>
+
+<script>
+(function () {
+  'use strict';
+  function wire(id, commitMode) {
+    var input = document.getElementById('in-' + id);
+    var ds = document.getElementById('ds-' + id);
+    var col = document.getElementById('col-' + id);
+    var n = document.getElementById('n-' + id);
+    var count = 0;
+    var committed = input.value;
+    function commit() {
+      if (input.value === committed) return;
+      committed = input.value;
+      count += 1;
+      col.textContent = committed || '(empty)';
+      n.textContent = String(count);
+      ds.classList.remove('flash');
+      void ds.offsetWidth; // restart animation
+      ds.classList.add('flash');
+    }
+    if (commitMode === 'debounce') {
+      var t = null;
+      input.addEventListener('input', function () {
+        clearTimeout(t);
+        t = setTimeout(commit, 300);
+      });
+    } else if (commitMode === 'blur-enter') {
+      var row = document.getElementById('row-b');
+      input.addEventListener('input', function () {
+        row.classList.toggle('pending', input.value !== committed);
+      });
+      input.addEventListener('blur', function () { commit(); row.classList.remove('pending'); });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { commit(); row.classList.remove('pending'); input.blur(); }
+      });
+    } else if (commitMode === 'confirm') {
+      var btn = document.getElementById('btn-c');
+      function arm() {
+        var dirty = input.value !== committed;
+        btn.classList.toggle('confirmed', !dirty);
+        btn.innerHTML = dirty ? 'Enter ↵' : '✓';
+      }
+      input.addEventListener('input', arm);
+      btn.addEventListener('click', function () { commit(); arm(); });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { commit(); arm(); }
+      });
+      // NOTE: deliberately no blur handler — that is the C contract.
+    }
+  }
+  wire('a', 'debounce');
+  wire('b', 'blur-enter');
+  wire('c', 'confirm');
+})();
+</script>
+
+</main>
+</body>
+</html>
