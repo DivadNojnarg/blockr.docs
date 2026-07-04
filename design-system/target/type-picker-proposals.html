@@ -240,6 +240,9 @@ and one group it wraps raggedly and the left-hand group label hangs awkwardly.</
   <em>rendering</em> blocks (blockr.viz) keep everything behind the gear — the rendered
   chart itself is the dashboard control, so dashboards show the control, not the config.
   The segmented strip remains for 2–4 type pickers (facet wrap/grid).
+  Follow-up: the one-button Timeline group is folded into Individual — the heading
+  describes data handling (rows plotted as-is vs self-aggregated), and gantt plots rows
+  as-is; the timeline <em>family</em> (x/xend/y mappings) is untouched underneath.
 </div>
 
 <h2>Status quo <span class="tag tag-base">baseline</span></h2>
@@ -396,7 +399,8 @@ today's viz picker but with labels above instead of left.</p>
 </div>
 
 <p class="hint">Group sizes are uneven (5 / 2 / 1), which the tile grid and the select absorb
-naturally; per-group strips leave the one-button Timeline group looking orphaned.</p>
+naturally; per-group strips leave the one-button Timeline group looking orphaned. (Resolved
+in the implementation by folding Timeline into Individual — see the decision note above.)</p>
 
 <h2>Guidance for the target concept</h2>
 <table>
