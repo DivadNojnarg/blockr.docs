@@ -993,6 +993,11 @@ blockr_ui_dep()       # convenience: everything above</code></pre>
     <td><em>Values → pill, data options → checkbox, UI modes → switch</em> (<a href="archive/boolean-controls-proposals.html"><code>boolean-controls-proposals.html</code></a>). Every self-labeling on/off pill becomes a checkbox: 16px box, radius-sm, primary fill when checked, 13px label, 26px hit area, native <code>&lt;input&gt;</code> underneath. Cycling pills stay exactly where the label <em>is the value</em> (AND/OR, asc/desc, n/%, operators). The switch is reserved for chrome-level modes and ships when a real use case lands; <code>.form-check</code>/<code>.form-switch</code> get matching restyles for the Bootstrap side (closes drift #15).</td>
     <td>Shipped in blockr.viz (<code>Blockr.checkbox</code>; engine boolean roles, drill toggle, summary-table stats/overall/nest); blockr.dplyr's <code>.sb-toggle</code>/<code>.fb-preserve</code>/popover toggles migrate with the shared layer.</td>
   </tr>
+  <tr>
+    <td><strong>Type picker</strong> <code>.dd-type-tile</code> / gear connector <code>.blockr-settings--beak</code></td>
+    <td>Decided 2026-07-04 (<a href="type-picker-proposals.html"><code>type-picker-proposals.html</code></a>): type pickers with 5+ types render as an <em>icon tile grid</em> (uniform icon-over-label tiles, per-group micro-headings when grouped; field label above — the label-on-the-left arrangement is retired); 2–4 types keep the segmented strip. Bands opened by a gear grow a <em>beak</em> pointing at the gear, which holds its active state while open (connector T1); the band opens directly under the gear header (placement P1). The main-vs-advanced question resolves by block role: <em>authoring</em> blocks (blockr.ggplot) show main config on the card, chart-specific extras behind the gear (gear hidden when empty); <em>rendering</em> blocks (blockr.viz) keep everything behind the gear — the rendered output is the dashboard control.</td>
+    <td>Shipped in blockr.ggplot (all four blocks) and blockr.viz's chart (engine <code>typeTiles</code>/<code>typeIcon</code>, dropdown add-menu, <code>.blockr-settings--beak</code> in <code>settings-band.css</code>).</td>
+  </tr>
 </table>
 
 <h3>5.5 Keystroke labels — one glyph, one rule</h3>

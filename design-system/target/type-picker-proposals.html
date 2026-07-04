@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type picker — proposals for the chart-type selector</title>
+<style>
+  /* ---- tokens (target set, see design-system.html) ---- */
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-600: #2563eb; --blockr-blue-700: #1d4ed8;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-normal: 400; --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-color-text-primary: var(--blockr-grey-900);
+    --blockr-color-text-muted: var(--blockr-grey-500);
+    --blockr-color-text-subtle: var(--blockr-grey-400);
+    --blockr-color-border: var(--blockr-grey-200);
+    --blockr-color-bg-input: var(--blockr-grey-50);
+    --blockr-color-primary: var(--blockr-blue-600);
+    --blockr-color-primary-bg: var(--blockr-blue-50);
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-radius-lg: 8px; --blockr-radius-md: 6px; --blockr-radius-sm: 4px;
+    --blockr-shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --blockr-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    --blockr-transition: 0.15s ease;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-color-text-primary); background: #fff; line-height: 1.55; }
+  main { max-width: 940px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-color-border); }
+  h3 { font-size: 1rem; font-weight: var(--blockr-font-weight-semibold); margin: 26px 0 6px; }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: var(--blockr-radius-sm); padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-color-text-muted); margin-top: 0; }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-base { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: var(--blockr-radius-lg);
+           padding: 20px 22px; margin: 14px 0; background: #fff; max-width: 660px; }
+  .stage.narrow { max-width: 340px; }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .pros { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; margin: 10px 0 0; max-width: 660px; }
+  .pros ul { margin: 4px 0; padding-left: 18px; font-size: var(--blockr-font-size-sm); }
+  .pros .h { font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+             text-transform: uppercase; letter-spacing: 0.04em; }
+  .pros .h.good { color: #166534; } .pros .h.bad { color: #b91c1c; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: var(--blockr-font-weight-medium); color: var(--blockr-color-text-muted);
+       border-bottom: 1px solid var(--blockr-color-border); padding: 6px 10px 6px 0; font-size: var(--blockr-font-size-xs);
+       text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 7px 10px 7px 0; vertical-align: top; }
+  .callout { border-left: 3px solid var(--blockr-color-primary); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0; margin: 16px 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle); }
+
+  /* ---- shared field scaffolding (the surrounding band context) ---- */
+  .field-label { font-size: var(--blockr-font-size-sm); font-weight: var(--blockr-font-weight-medium);
+                 color: var(--blockr-grey-700); margin-bottom: 5px; }
+  .tp-icon svg { display: block; opacity: 0.5; }
+  .active .tp-icon svg, .tp-active .tp-icon svg { opacity: 0.9; }
+
+  /* ================================================================
+     STATUS QUO — grouped strip, label left, ragged wrap
+     ================================================================ */
+  .sq-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .sq-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+              font-weight: var(--blockr-font-weight-medium); white-space: nowrap; }
+  .sq-strip { display: flex; flex-wrap: wrap; border: 1px solid var(--blockr-color-border);
+              border-radius: var(--blockr-radius-md); overflow: hidden; }
+  .sq-btn { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: none;
+            border-right: 1px solid var(--blockr-color-border); padding: 7px 12px;
+            font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-500); cursor: pointer;
+            text-transform: capitalize; }
+  .sq-btn:last-child { border-right: none; }
+  .sq-btn:hover { background: var(--blockr-grey-50); }
+  .sq-btn.active { background: var(--blockr-color-primary-bg); color: var(--blockr-color-primary);
+                   font-weight: var(--blockr-font-weight-medium); }
+
+  /* ================================================================
+     A — one field among fields: a select-style control
+     ================================================================ */
+  .va-wrap { position: relative; max-width: 250px; }
+  .va-control { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 38px;
+                padding: 7px 12px; background: var(--blockr-color-bg-input);
+                border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-lg);
+                font-size: var(--blockr-font-size-base); color: var(--blockr-grey-700);
+                cursor: pointer; text-transform: capitalize; }
+  .va-control:hover { border-color: var(--blockr-grey-300); }
+  .va-control .caret { margin-left: auto; color: var(--blockr-grey-400); font-size: 10px; }
+  .va-menu { position: absolute; top: 100%; left: 0; z-index: 30; min-width: 100%;
+             margin-top: 4px; padding: 4px; background: #fff;
+             border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-lg);
+             box-shadow: var(--blockr-shadow-dropdown); display: none; }
+  .va-menu.open { display: block; }
+  .va-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px;
+             border: none; background: transparent; border-radius: var(--blockr-radius-sm);
+             font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-700); cursor: pointer;
+             text-transform: capitalize; text-align: left; }
+  .va-item:hover { background: var(--blockr-grey-50); }
+  .va-item.active { background: var(--blockr-color-primary-bg); color: var(--blockr-color-primary); }
+
+  /* ================================================================
+     B — icon tile grid
+     ================================================================ */
+  .vb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+             gap: 6px; }
+  .vb-tile { display: flex; flex-direction: column; align-items: center; gap: 5px;
+             padding: 9px 4px 7px; background: #fff; border: 1px solid var(--blockr-color-border);
+             border-radius: var(--blockr-radius-md); font-size: var(--blockr-font-size-xs);
+             color: var(--blockr-grey-500); cursor: pointer; text-transform: capitalize;
+             transition: background var(--blockr-transition), border-color var(--blockr-transition); }
+  .vb-tile:hover { background: var(--blockr-grey-50); border-color: var(--blockr-grey-300); }
+  .vb-tile.active { background: var(--blockr-color-primary-bg); border-color: var(--blockr-color-primary);
+                    color: var(--blockr-color-primary); font-weight: var(--blockr-font-weight-medium); }
+
+  /* ================================================================
+     C — full-width segmented strip, label above, icon-only when narrow
+     ================================================================ */
+  .vc-strip { display: flex; width: 100%; border: 1px solid var(--blockr-color-border);
+              border-radius: var(--blockr-radius-md); overflow: hidden;
+              container-type: inline-size; }
+  .vc-btn { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px; min-width: 0; background: #fff; border: none;
+            border-right: 1px solid var(--blockr-color-border); padding: 8px 4px;
+            font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-500); cursor: pointer;
+            text-transform: capitalize; }
+  .vc-btn:last-child { border-right: none; }
+  .vc-btn:hover { background: var(--blockr-grey-50); }
+  .vc-btn.active { background: var(--blockr-color-primary-bg); color: var(--blockr-color-primary);
+                   font-weight: var(--blockr-font-weight-medium); }
+  .vc-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @container (max-width: 560px) { .vc-strip .vc-btn span:not(.tp-icon) { display: none; } }
+
+  /* ================================================================
+     D — single-row scroll strip
+     ================================================================ */
+  .vd-scroll { position: relative; }
+  .vd-strip { display: flex; overflow-x: auto; scrollbar-width: none;
+              border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-md); }
+  .vd-strip::-webkit-scrollbar { display: none; }
+  .vd-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; background: #fff;
+            border: none; border-right: 1px solid var(--blockr-color-border); padding: 7px 12px;
+            font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-500); cursor: pointer;
+            text-transform: capitalize; }
+  .vd-btn:last-child { border-right: none; }
+  .vd-btn.active { background: var(--blockr-color-primary-bg); color: var(--blockr-color-primary);
+                   font-weight: var(--blockr-font-weight-medium); }
+  .vd-fade { position: absolute; top: 1px; bottom: 1px; right: 1px; width: 28px; pointer-events: none;
+             background: linear-gradient(to right, rgba(255,255,255,0), #fff);
+             border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0; }
+
+  /* ================================================================
+     Grouped types (blockr.viz)
+     ================================================================ */
+  .grp-head { grid-column: 1 / -1; font-size: var(--blockr-font-size-xs);
+              font-weight: var(--blockr-font-weight-medium); text-transform: uppercase;
+              letter-spacing: 0.04em; color: var(--blockr-grey-400); margin: 8px 0 2px; }
+  .vb-grid .grp-head:first-child { margin-top: 0; }
+  .va-group { font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+              text-transform: uppercase; letter-spacing: 0.04em; color: var(--blockr-grey-400);
+              padding: 6px 10px 2px; }
+  .vc-groups { display: flex; gap: 14px; flex-wrap: wrap; }
+  .vc-group { flex: 1 1 0; min-width: 0; }
+  .vc-group .grp-head { margin: 0 0 4px; }
+
+  /* ---- gear-placement mockups ---- */
+  .mock { border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-lg);
+          padding: 10px 12px; font-size: var(--blockr-font-size-xs); }
+  .mock .zone { border-radius: var(--blockr-radius-sm); padding: 7px 10px; margin: 6px 0;
+                color: var(--blockr-grey-500); background: var(--blockr-grey-50);
+                border: 1px solid var(--blockr-grey-100); }
+  .mock .gearline { display: flex; justify-content: flex-end; color: var(--blockr-grey-400); }
+  .mock .adv { background: var(--blockr-color-primary-bg); border: 1px solid #bfdbfe;
+               color: var(--blockr-color-primary); }
+  .mock .plot { height: 54px; display: flex; align-items: center; justify-content: center; }
+  .mockrow { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 660px; }
+
+  /* ---- connector treatments (interactive: click the gear) ---- */
+  .conrow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; max-width: 940px; }
+  .con-gearbtn { display: inline-flex; align-items: center; justify-content: center;
+                 width: 28px; height: 28px; border: 1px solid transparent;
+                 border-radius: var(--blockr-radius-md); background: transparent;
+                 color: var(--blockr-grey-400); cursor: pointer; font-size: 14px;
+                 position: relative; z-index: 2; }
+  .con-gearbtn:hover { background: var(--blockr-grey-100); color: var(--blockr-grey-700); }
+  .con .band { display: none; position: relative; margin: 6px 0;
+               border: 1px solid #bfdbfe; border-radius: var(--blockr-radius-lg);
+               background: var(--blockr-color-primary-bg); color: var(--blockr-color-primary);
+               padding: 10px 12px; }
+  .con.open .band { display: block; }
+  .con.open .con-gearbtn { background: var(--blockr-color-primary-bg);
+                           border-color: #bfdbfe; color: var(--blockr-color-primary); }
+
+  /* T1: beak — a notch on the band's top edge pointing at the gear */
+  .con-beak.open .band { margin-top: 8px; }
+  .con-beak.open .band::before { content: ""; position: absolute; top: -6px; right: 9px;
+    width: 10px; height: 10px; background: var(--blockr-color-primary-bg);
+    border-left: 1px solid #bfdbfe; border-top: 1px solid #bfdbfe; transform: rotate(45deg); }
+
+  /* T2: tab-merge — the open gear button fuses with the band below it */
+  .con-tab.open .con-gearbtn { border-radius: var(--blockr-radius-md) var(--blockr-radius-md) 0 0;
+    border-bottom-color: var(--blockr-color-primary-bg); }
+  .con-tab.open .band { margin-top: -1px; border-top-right-radius: 0; }
+
+  /* T3: beak + band header with title and close hint */
+  .con-head { display: flex; align-items: center; justify-content: space-between;
+              margin-bottom: 6px; font-weight: var(--blockr-font-weight-medium); }
+  .con-head .x { border: none; background: transparent; color: var(--blockr-color-primary);
+                 cursor: pointer; font-size: 13px; line-height: 1; padding: 2px 4px;
+                 opacity: 0.75; border-radius: var(--blockr-radius-sm); }
+  .con-head .x:hover { opacity: 1; background: rgba(37, 99, 235, 0.1); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Type picker</h1>
+<p class="lede">Proposals for the chart-type selector in the ggplot block's main settings area —
+feeding the target settings-band concept (design-system.html §5.4). The current grouped strip
+inherits blockr.viz's family picker, which was designed for 3 groups of 2–4 types; with 9 types
+and one group it wraps raggedly and the left-hand group label hangs awkwardly.</p>
+
+<div class="callout">
+  <strong>Decided (2026-07-04):</strong> variant <strong>B</strong> (icon tile grid; with group
+  headings for grouped types) — implemented in blockr.ggplot and blockr.viz's chart block
+  (engine option <code>typeTiles</code> + <code>typeIcon</code>). Appendix: placement
+  <strong>P1</strong> (band under the gear header) with connector <strong>T1</strong>
+  (beak + active gear; shared opt-in class <code>.blockr-settings--beak</code> in
+  settings-band.css). The main-vs-advanced question resolves by block role:
+  <em>authoring</em> blocks (blockr.ggplot) show main config on the card with only
+  chart-specific extras behind the gear (gear hidden when there are none);
+  <em>rendering</em> blocks (blockr.viz) keep everything behind the gear — the rendered
+  chart itself is the dashboard control, so dashboards show the control, not the config.
+  The segmented strip remains for 2–4 type pickers (facet wrap/grid).
+</div>
+
+<h2>Status quo <span class="tag tag-base">baseline</span></h2>
+<p>Engine's <code>typeGroups</code> strip: label on the left, joined buttons wrapping into
+uneven rows at panel widths.</p>
+
+<div class="stage">
+  <div class="stage-label">Current — 660px panel</div>
+  <div class="sq-row">
+    <span class="sq-label">Type</span>
+    <div class="sq-strip" data-pick></div>
+  </div>
+</div>
+
+<h2>A — a field among fields: type select</h2>
+<p>The type becomes a normal form row — label above, one select-style control showing the
+current type with its icon; the dropdown lists all types. It occupies one cell of the section
+grid like every other field, so there is nothing to wrap, at any width or type count.</p>
+
+<div class="stage">
+  <div class="stage-label">Variant A</div>
+  <div class="field-label">Chart type</div>
+  <div class="va-wrap">
+    <button type="button" class="va-control" id="va-control"></button>
+    <div class="va-menu" id="va-menu"></div>
+  </div>
+</div>
+
+<div class="pros">
+  <div><div class="h good">For</div><ul>
+    <li>Perfectly consistent with the rest of the band — it is just a field</li>
+    <li>Scales to any number of types; most compact</li>
+    <li>Same interaction as every other picker (Blockr.Select)</li>
+  </ul></div>
+  <div><div class="h bad">Against</div><ul>
+    <li>Alternatives hidden behind a click; no at-a-glance overview</li>
+    <li>Type switching is the block's primary action — two clicks instead of one</li>
+  </ul></div>
+</div>
+
+<h2>B — icon tile grid <span class="tag tag-rec">recommended for the ggplot block</span></h2>
+<p>Uniform icon-over-label tiles in an auto-fill grid: the historical look of the ggplot
+block's selector, restyled with design-system tokens. Wrapping is by design — rows stay
+uniform instead of ragged, and every type is visible at once.</p>
+
+<div class="stage">
+  <div class="stage-label">Variant B — 660px panel</div>
+  <div class="field-label">Chart type</div>
+  <div class="vb-grid" data-pick></div>
+</div>
+
+<div class="stage narrow">
+  <div class="stage-label">Variant B — narrow panel (340px)</div>
+  <div class="field-label">Chart type</div>
+  <div class="vb-grid" data-pick></div>
+</div>
+
+<div class="pros">
+  <div><div class="h good">For</div><ul>
+    <li>All 9 types visible, one click to switch</li>
+    <li>Wraps into <em>uniform</em> rows — no raggedness at any width</li>
+    <li>Icons get room to carry meaning; closest to the pre-band UI</li>
+  </ul></div>
+  <div><div class="h bad">Against</div><ul>
+    <li>Tallest of the variants (two tile rows on a typical panel)</li>
+    <li>A new component shape (tile) alongside strip and pill</li>
+  </ul></div>
+</div>
+
+<h2>C — full-width strip, label above, icons-only when narrow</h2>
+<p>Keep the joined segmented strip, but drop the left label (a normal field label above),
+stretch the buttons across the full band width, and collapse to icon-only buttons below a
+width threshold — always exactly one row.</p>
+
+<div class="stage">
+  <div class="stage-label">Variant C — 660px panel</div>
+  <div class="field-label">Chart type</div>
+  <div class="vc-strip" data-pick></div>
+</div>
+
+<div class="stage narrow">
+  <div class="stage-label">Variant C — narrow panel (icons only)</div>
+  <div class="field-label">Chart type</div>
+  <div class="vc-strip" data-pick></div>
+</div>
+
+<div class="pros">
+  <div><div class="h good">For</div><ul>
+    <li>One row, always; keeps the familiar segmented look</li>
+    <li>All types visible, one click</li>
+  </ul></div>
+  <div><div class="h bad">Against</div><ul>
+    <li>9 segments get cramped; labels truncate before the icon-only cutover</li>
+    <li>Icon-only mode leans hard on icon recognizability (tooltips help)</li>
+  </ul></div>
+</div>
+
+<h2>D — single-row scroll strip</h2>
+<p>The strip never wraps: it scrolls horizontally, with a fade hinting at more.</p>
+
+<div class="stage narrow">
+  <div class="stage-label">Variant D — narrow panel, scrolls</div>
+  <div class="field-label">Chart type</div>
+  <div class="vd-scroll">
+    <div class="vd-strip" data-pick></div>
+    <div class="vd-fade"></div>
+  </div>
+</div>
+
+<div class="pros">
+  <div><div class="h good">For</div><ul>
+    <li>Minimal change from the status quo; one row by construction</li>
+  </ul></div>
+  <div><div class="h bad">Against</div><ul>
+    <li>Hidden off-screen types; horizontal scroll is easy to miss</li>
+    <li>Selected type can sit out of view after restore</li>
+  </ul></div>
+</div>
+
+<h2>Grouped types — the blockr.viz chart block</h2>
+<p>blockr.viz's picker has the extra dimension the strip was originally built for:
+8 types in 3 families (<code>Aggregated</code> bar/pie/treemap/boxplot/radar,
+<code>Individual</code> scatter/line, <code>Timeline</code> gantt). Whatever replaces the
+strip must keep that structure visible, because the family decides which mappings exist.
+How each leading variant carries groups:</p>
+
+<h3>B with group headings <span class="tag tag-rec">recommended pairing</span></h3>
+<p>The tile grid takes micro-headings as full-width rows — same look as the band's
+section titles, so grouping reads instantly and tiles stay uniform.</p>
+<div class="stage">
+  <div class="stage-label">Variant B, grouped — 660px panel</div>
+  <div class="field-label">Chart type</div>
+  <div class="vb-grid" id="viz-b"></div>
+</div>
+
+<h3>A with option groups</h3>
+<p>The type select gets optgroup-style section labels — the standard pattern for
+grouped choices, unchanged interaction.</p>
+<div class="stage">
+  <div class="stage-label">Variant A, grouped</div>
+  <div class="field-label">Chart type</div>
+  <div class="va-wrap">
+    <button type="button" class="va-control" id="viz-a-control"></button>
+    <div class="va-menu" id="viz-a-menu"></div>
+  </div>
+</div>
+
+<h3>C as per-group strips</h3>
+<p>One labelled strip per family, sharing a row and wrapping as whole groups — close to
+today's viz picker but with labels above instead of left.</p>
+<div class="stage">
+  <div class="stage-label">Variant C, grouped — 660px panel</div>
+  <div class="vc-groups" id="viz-c"></div>
+</div>
+
+<p class="hint">Group sizes are uneven (5 / 2 / 1), which the tile grid and the select absorb
+naturally; per-group strips leave the one-button Timeline group looking orphaned.</p>
+
+<h2>Guidance for the target concept</h2>
+<table>
+  <tr><th>Type count</th><th>Picker</th><th>Example</th></tr>
+  <tr><td>2–4</td><td>Segmented strip (label above, full row) — variant C degenerates to this</td><td>facet wrap/grid, viz table layouts</td></tr>
+  <tr><td>5+</td><td>Icon tile grid (variant B)</td><td>ggplot chart types</td></tr>
+  <tr><td>5+, grouped</td><td>Icon tile grid with group headings</td><td>viz chart families</td></tr>
+  <tr><td>Space-constrained / secondary</td><td>Type select (variant A, optgroups when grouped)</td><td>pickers inside the advanced band</td></tr>
+</table>
+<p class="hint">Whatever is chosen, the group-label-on-the-left arrangement goes away: type
+pickers get a normal field label above, like every other control in the band.</p>
+
+<h2>Appendix — where should the advanced band open?</h2>
+<p>Today the ggplot blocks open the gear band <em>below</em> the main settings (reading order:
+main, then advanced, then result). blockr.viz blocks open it directly under the gear header —
+but they have no always-visible main area, so both rules coincide there. The question only
+exists for blocks with a main area:</p>
+
+<div class="mockrow">
+  <div>
+    <div class="stage-label">P1 — band on top (under the gear header)</div>
+    <div class="mock">
+      <div class="gearline">⚙ gear</div>
+      <div class="zone adv">advanced band (opens here)</div>
+      <div class="zone">main settings</div>
+      <div class="zone plot">plot</div>
+    </div>
+  </div>
+  <div>
+    <div class="stage-label">P2 — band below main (current)</div>
+    <div class="mock">
+      <div class="gearline">⚙ gear</div>
+      <div class="zone">main settings</div>
+      <div class="zone adv">advanced band (opens here)</div>
+      <div class="zone plot">plot</div>
+    </div>
+  </div>
+</div>
+
+<div class="pros">
+  <div><div class="h good">P1 — on top</div><ul>
+    <li>One rule for every block: “the gear opens its panel directly under the header”</li>
+    <li>Panel appears next to the gear that opened it — clear cause and effect</li>
+  </ul></div>
+  <div><div class="h bad">P1 costs</div><ul>
+    <li>Main controls jump down when the band opens</li>
+    <li>Reading order becomes advanced-before-main</li>
+  </ul></div>
+</div>
+
+<div class="callout">
+  <strong>Lean:</strong> P1 (on top), for the one-rule consistency across all blocks —
+  the jumpiness is the same content-pushes-down behavior the band already has everywhere else,
+  and it is a one-line DOM-order change in <code>gg-blocks.js</code>. But P2's
+  main-then-advanced reading order is a defensible per-block exception if the jump feels worse
+  in practice.
+</div>
+
+<h3>Connecting the gear to its band</h3>
+<p>If the band opens on top, the gear and the band should read as one thing — and it should be
+obvious that the gear that opened it also closes it. Three treatments
+(<em>click the gear in each mock</em>):</p>
+
+<div class="conrow">
+  <div>
+    <div class="stage-label">T1 — beak</div>
+    <div class="mock con con-beak">
+      <div class="gearline"><button type="button" class="con-gearbtn" title="Advanced options"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 1 1 0 5.858z"/></svg></button></div>
+      <div class="band">advanced settings</div>
+      <div class="zone">main settings</div>
+      <div class="zone plot">plot</div>
+    </div>
+  </div>
+  <div>
+    <div class="stage-label">T2 — tab-merge</div>
+    <div class="mock con con-tab">
+      <div class="gearline"><button type="button" class="con-gearbtn" title="Advanced options"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 1 1 0 5.858z"/></svg></button></div>
+      <div class="band">advanced settings</div>
+      <div class="zone">main settings</div>
+      <div class="zone plot">plot</div>
+    </div>
+  </div>
+  <div>
+    <div class="stage-label">T3 — beak + header with close</div>
+    <div class="mock con con-beak">
+      <div class="gearline"><button type="button" class="con-gearbtn" title="Advanced options"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 1 1 0 5.858z"/></svg></button></div>
+      <div class="band">
+        <div class="con-head">Advanced options
+          <button type="button" class="x" title="Close">✕</button></div>
+        advanced settings
+      </div>
+      <div class="zone">main settings</div>
+      <div class="zone plot">plot</div>
+    </div>
+  </div>
+</div>
+
+<div class="pros" style="max-width: 940px">
+  <div><div class="h good">Notes</div><ul>
+    <li>All three keep the gear <em>active-state</em> while open (blue tint) — the minimum signal
+        that the same button toggles it off</li>
+    <li>T1 is the classic popover cue: near-zero cost, instantly readable</li>
+    <li>T2 makes gear + band literally one shape (a tab); strongest connection, slightly fussy
+        at the rounded corner</li>
+    <li>T3 adds an explicit escape hatch for users who won't think to re-click the gear;
+        title also removes the need for the band's uppercase heading</li>
+  </ul></div>
+  <div><div class="h bad">&nbsp;</div><ul>
+    <li>The beak must track the gear's x-position if the header ever gains more icons
+        (fixed offset works today: the gear is always last on the right)</li>
+    <li>An explicit ✕ duplicates the gear's toggle — two ways to do one thing</li>
+  </ul></div>
+</div>
+
+<div class="callout">
+  <strong>Lean:</strong> T1 + the active gear state, optionally with T3's ✕ if user tests show
+  people getting stuck. The beak is one CSS pseudo-element on
+  <code>.gg-settings-adv</code>.
+</div>
+
+</main>
+<script>
+  var TYPES = ['point', 'bar', 'line', 'boxplot', 'pie', 'histogram', 'density', 'violin', 'area'];
+  var ICONS = {
+    point: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="11" r="1.6"/><circle cx="8" cy="6" r="1.6"/><circle cx="12" cy="9" r="1.6"/><circle cx="13" cy="3" r="1.6"/></svg>',
+    bar: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="8" width="3" height="6"/><rect x="6.5" y="4" width="3" height="10"/><rect x="11" y="10" width="3" height="4"/></svg>',
+    line: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 12 L6 7 L10 9 L14 3"/></svg>',
+    boxplot: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="5" width="8" height="6"/><path d="M4 8 h8 M8 2 v3 M8 11 v3 M6 2 h4 M6 14 h4"/></svg>',
+    pie: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M8 8 V2 M8 8 L13 11"/></svg>',
+    histogram: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="9" width="3" height="5"/><rect x="5" y="5" width="3" height="9"/><rect x="8" y="7" width="3" height="7"/><rect x="11" y="11" width="3" height="3"/></svg>',
+    density: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 13 C5 13 5 4 8 4 C11 4 11 13 14 13"/></svg>',
+    violin: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 2 C10 5 12 6 12 9 C12 12 10 14 8 14 C6 14 4 12 4 9 C4 6 6 5 8 2 Z"/></svg>',
+    area: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 14 L2 11 L6 6 L10 8 L14 3 L14 14 Z" opacity="0.85"/></svg>'
+  };
+  var BTN_CLASS = { 'sq-strip': 'sq-btn', 'vb-grid': 'vb-tile', 'vc-strip': 'vc-btn', 'vd-strip': 'vd-btn' };
+
+  // Populate every [data-pick] container with the 9 type buttons.
+  document.querySelectorAll('[data-pick]').forEach(function (box) {
+    var cls = Object.keys(BTN_CLASS).find(function (k) { return box.classList.contains(k); });
+    TYPES.forEach(function (t, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = BTN_CLASS[cls] + (i === 0 ? ' active' : '');
+      b.title = t;
+      b.innerHTML = '<span class="tp-icon">' + ICONS[t] + '</span><span>' + t + '</span>';
+      b.addEventListener('click', function () {
+        box.querySelectorAll('.active').forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active');
+      });
+      box.appendChild(b);
+    });
+  });
+
+  // Variant A: select-style control + dropdown.
+  var vaControl = document.getElementById('va-control');
+  var vaMenu = document.getElementById('va-menu');
+  function vaSet(t) {
+    vaControl.innerHTML = '<span class="tp-icon">' + ICONS[t] + '</span><span>' + t +
+      '</span><span class="caret">▾</span>';
+    vaMenu.querySelectorAll('.va-item').forEach(function (x) {
+      x.classList.toggle('active', x.dataset.t === t);
+    });
+  }
+  TYPES.forEach(function (t) {
+    var it = document.createElement('button');
+    it.type = 'button';
+    it.className = 'va-item';
+    it.dataset.t = t;
+    it.innerHTML = '<span class="tp-icon">' + ICONS[t] + '</span><span>' + t + '</span>';
+    it.addEventListener('click', function () { vaSet(t); vaMenu.classList.remove('open'); });
+    vaMenu.appendChild(it);
+  });
+  vaControl.addEventListener('click', function (e) {
+    e.stopPropagation();
+    vaMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', function () { vaMenu.classList.remove('open'); });
+  vaSet('point');
+
+  /* ---- grouped types (blockr.viz chart) ---- */
+  ICONS.scatter = ICONS.point;
+  ICONS.treemap = '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">' +
+    '<rect x="2" y="2" width="7" height="12" rx="1"/><rect x="10" y="2" width="4" height="6" rx="1"/>' +
+    '<rect x="10" y="9" width="4" height="5" rx="1"/></svg>';
+  ICONS.radar = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">' +
+    '<path d="M8 2 L14 6.5 L11.7 13.5 L4.3 13.5 L2 6.5 Z"/>' +
+    '<path d="M8 8 L8 2 M8 8 L14 6.5 M8 8 L11.7 13.5 M8 8 L4.3 13.5 M8 8 L2 6.5"/></svg>';
+  ICONS.gantt = '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">' +
+    '<rect x="2" y="3" width="8" height="2.6" rx="1"/><rect x="5" y="6.8" width="9" height="2.6" rx="1"/>' +
+    '<rect x="3" y="10.6" width="6" height="2.6" rx="1"/></svg>';
+
+  var VIZ_GROUPS = [
+    { label: 'Aggregated', types: ['bar', 'pie', 'treemap', 'boxplot', 'radar'] },
+    { label: 'Individual', types: ['scatter', 'line'] },
+    { label: 'Timeline', types: ['gantt'] }
+  ];
+  function btnHtml(t) {
+    return '<span class="tp-icon">' + ICONS[t] + '</span><span>' + t + '</span>';
+  }
+  function pickIn(box, btn) {
+    box.querySelectorAll('.active').forEach(function (x) { x.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+
+  // B grouped: micro-heading rows inside the tile grid.
+  var vizB = document.getElementById('viz-b');
+  VIZ_GROUPS.forEach(function (g, gi) {
+    var h = document.createElement('div');
+    h.className = 'grp-head';
+    h.textContent = g.label;
+    vizB.appendChild(h);
+    g.types.forEach(function (t, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vb-tile' + (gi === 0 && i === 0 ? ' active' : '');
+      b.innerHTML = btnHtml(t);
+      b.addEventListener('click', function () { pickIn(vizB, b); });
+      vizB.appendChild(b);
+    });
+  });
+
+  // A grouped: optgroup-style dropdown.
+  var vizAC = document.getElementById('viz-a-control');
+  var vizAM = document.getElementById('viz-a-menu');
+  function vizASet(t) {
+    vizAC.innerHTML = btnHtml(t) + '<span class="caret">▾</span>';
+    vizAM.querySelectorAll('.va-item').forEach(function (x) {
+      x.classList.toggle('active', x.dataset.t === t);
+    });
+  }
+  VIZ_GROUPS.forEach(function (g) {
+    var h = document.createElement('div');
+    h.className = 'va-group';
+    h.textContent = g.label;
+    vizAM.appendChild(h);
+    g.types.forEach(function (t) {
+      var it = document.createElement('button');
+      it.type = 'button';
+      it.className = 'va-item';
+      it.dataset.t = t;
+      it.innerHTML = btnHtml(t);
+      it.addEventListener('click', function () { vizASet(t); vizAM.classList.remove('open'); });
+      vizAM.appendChild(it);
+    });
+  });
+  vizAC.addEventListener('click', function (e) {
+    e.stopPropagation();
+    vizAM.classList.toggle('open');
+  });
+  document.addEventListener('click', function () { vizAM.classList.remove('open'); });
+  vizASet('bar');
+
+  // C grouped: one labelled strip per family.
+  var vizC = document.getElementById('viz-c');
+  VIZ_GROUPS.forEach(function (g, gi) {
+    var grp = document.createElement('div');
+    grp.className = 'vc-group';
+    grp.style.flexGrow = g.types.length;
+    var h = document.createElement('div');
+    h.className = 'grp-head';
+    h.textContent = g.label;
+    grp.appendChild(h);
+    var strip = document.createElement('div');
+    strip.className = 'vc-strip';
+    g.types.forEach(function (t, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vc-btn' + (gi === 0 && i === 0 ? ' active' : '');
+      b.title = t;
+      b.innerHTML = btnHtml(t);
+      b.addEventListener('click', function () { pickIn(vizC, b); });
+      strip.appendChild(b);
+    });
+    grp.appendChild(strip);
+    vizC.appendChild(grp);
+  });
+
+  /* ---- connector mocks: gear toggles its band ---- */
+  document.querySelectorAll('.con').forEach(function (mock) {
+    var gear = mock.querySelector('.con-gearbtn');
+    gear.addEventListener('click', function () { mock.classList.toggle('open'); });
+    var x = mock.querySelector('.con-head .x');
+    if (x) x.addEventListener('click', function () { mock.classList.remove('open'); });
+    mock.classList.add('open'); // start open so the treatment is visible
+  });
+</script>
+</body>
+</html>
