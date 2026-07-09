@@ -49,12 +49,27 @@ never a warning banner:
 - border `var(--blockr-color-warning, #f59e0b)`, background
   `var(--blockr-color-warning-bg, #fffbeb)`
 - the label carries a trailing `*`
-- a muted help line sits **directly beneath the field**, saying what to supply
-  in a terse noun phrase ("one or more columns", "column to aggregate…") — the
-  label already names the field, so the hint should not repeat it
+- **only if it adds something the control does not already say**, a muted help
+  line sits directly beneath the field, in a terse noun phrase ("one or more
+  columns", "column to aggregate…")
 
 The cue clears the moment the field has a value. This is attention, not error:
 it says "this still needs you", not "you did something wrong".
+
+### Help text earns its place or it does not exist
+
+A help line is not part of the required-empty recipe. It is an extra, and the
+bar for it is that a user who has read the label, the placeholder and the
+control still does not know what to supply. Restating what is already on screen
+adds a line of chrome and teaches the user that our hints carry no information,
+so the one hint that *would* have mattered gets skipped too.
+
+Do not write a hint that paraphrases the placeholder. A patient picker whose
+placeholder reads `Select a patient` needs no line beneath it saying "one
+patient to profile"; the amber cue already says "this still needs you" and the
+placeholder already says what "this" is. Reach for a hint when the field takes
+a shape the control cannot show — a unit, a format, a constraint, a
+consequence — not when it merely takes a value.
 
 ## Boolean controls
 
