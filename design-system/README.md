@@ -13,6 +13,12 @@ Visual primitives and shared component specs for blockr's hand-rolled UI chrome.
 
 The canonical source lives in `blockr.dplyr/inst/` (`blockr-core.js`, `blockr-blocks.css`, `blockr-select.*`, `blockr-input.*`). Other packages copy these assets until they are extracted to `blockr.core`. Values below are snapshotted against `blockr.dplyr/dev/design-system.md` and the CSS files as of 2026-04-19.
 
+## Principles
+
+- [ux-principles.md](./ux-principles.md) — how controls should *behave*:
+  defaults (auto-pick when harmless, require a choice when it silently changes
+  results), required-empty amber cues, pills vs checkboxes, text commit.
+
 ## Primitives (status quo)
 
 - [colors.md](./colors.md) — greyscale, semantic colors, CSS variable names.

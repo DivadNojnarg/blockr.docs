@@ -11,6 +11,7 @@ See [decisions/0001-hand-rolled-vs-libraries.md](../../decisions/0001-hand-rolle
 var sel = Blockr.Select.single(container, {
   options: ["a", "b"],              // string[] or {value, label}[]
   selected: "a",                    // string | null (null auto-selects first)
+  allowEmpty: false,               // true: '' means "nothing selected" and survives setOptions()
   placeholder: "Column...",
   onChange: function (value) {}
 });
@@ -97,3 +98,20 @@ Dropdowns use the portal pattern — appended to `<body>` with `position: fixed`
 ## Bundle cost
 
 Current stack (`blockr-core` + `blockr-select` JS/CSS + `blockr-blocks.css`): ~9.2 KB gzipped. For comparison, Tom Select base is ~18 KB, complete build ~30 KB.
+
+## Defaults and the empty state
+
+Single mode falls back to the **first option** whenever the caller has no valid
+selection — including across `setOptions()`. That is the right default where
+auto-picking is harmless (a fresh filter row, a summarize row's column), but
+wrong where it silently changes results (`slice_min`'s `order_by`, `separate`'s
+column, weighted sampling). Those fields pass `allowEmpty: true` and `''`, so
+the placeholder shows, `getValue()` stays `''`, and the block can mark itself
+required-empty.
+
+Whichever applies, the block's model must agree with what the control shows:
+either opt out of the fallback with `allowEmpty`, or re-read `getValue()` into
+the model after `setOptions()`. A picker displaying a column while the block's
+state is empty makes the block look configured when it is not.
+
+See [ux-principles.md](../ux-principles.md).
