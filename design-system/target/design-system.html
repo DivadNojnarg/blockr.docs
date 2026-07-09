@@ -68,6 +68,9 @@
 
     /* ---------- PROPOSED ADDITIONS (do not exist yet) ---------- */
     --blockr-color-danger: var(--blockr-color-error);          /* NEW: unify #dc3545 / #F43F5E / #dc2626 */
+    --blockr-color-warning: #f59e0b;      /* NEW: amber-500 — warning borders & icons (required-empty cue) */
+    --blockr-color-warning-text: #b45309; /* NEW: amber-700 — warning prose/status text (contrast on light bg) */
+    --blockr-color-warning-bg: #fffbeb;   /* NEW: amber-50 — tinted field background */
     --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace; /* NEW */
     --blockr-radius-lg: 8px;                                   /* NEW: containers, inputs, dropdowns */
     --blockr-radius-md: 6px;                                   /* NEW: internal card sub-sections */
@@ -548,6 +551,9 @@ blockr.{dplyr, dm, viz, ai, io, &hellip;}   (blocks: consume tokens + components
   <tr><td><code>--blockr-color-error</code></td><td>literal</td><td class="d-code">#dc2626</td><td><span style="color:var(--blockr-color-error)">Error text</span></td></tr>
   <tr><td><code>--blockr-color-success</code></td><td>literal</td><td class="d-code">#16a34a</td><td><span style="color:var(--blockr-color-success)">Success text</span></td></tr>
   <tr><td><code>--blockr-color-danger</code> <span class="tag tag-new">new</span></td><td>&rarr; error</td><td class="d-code">#dc2626</td><td>replaces #dc3545 (dplyr/docs) and #F43F5E (table-preview) — see <a href="#drift">drift</a></td></tr>
+  <tr><td><code>--blockr-color-warning</code> <span class="tag tag-new">new</span></td><td>literal</td><td class="d-code">#f59e0b</td><td><span style="color:#f59e0b">■</span> warning borders/icons — the required-empty amber cue (viz/io/ggplot/dplyr)</td></tr>
+  <tr><td><code>--blockr-color-warning-text</code> <span class="tag tag-new">new</span></td><td>literal</td><td class="d-code">#b45309</td><td><span style="color:#b45309">Warning text</span> — amber-700 for contrast on light bg (status lines, cap notes)</td></tr>
+  <tr><td><code>--blockr-color-warning-bg</code> <span class="tag tag-new">new</span></td><td>literal</td><td class="d-code">#fffbeb</td><td>tinted field background behind the amber border. Until the blockr.ui token layer exists these three are consumed via <code>var(--…, fallback)</code> only — the <em>fallback value is the contract</em> and must equal the values here.</td></tr>
 </table>
 
 <h3>2.4 Typography <span class="ref">blockr-dock.css:31-40 &middot; blockr.dplyr/dev/design-system.md:5-18</span></h3>
@@ -740,7 +746,7 @@ blockr.{dplyr, dm, viz, ai, io, &hellip;}   (blocks: consume tokens + components
 
 <h3>3.3 Blockr.Input — <span class="ref">blockr.dplyr/inst/css/blockr-input.css + inst/js/blockr-input.js</span> (390 lines JS) <span class="tag tag-new">move to blockr.ui</span></h3>
 <p>Code input with token autocomplete, replacing the ACE editor. Spec: <span class="ref">blockr.dplyr/dev/blockr-input-spec.md</span>. Same embedded / <code>--bordered</code> duality as Select. The field is mono; the popup is intentionally UI-font (though currently a hardcoded stack instead of <code>inherit</code> — drift #8). Completion items: mono function name + grey <code>()</code> + right-aligned lowercase category meta.</p>
-<div class="callout"><strong>Commit convention (decided 2026-07-02):</strong> expression editors commit on explicit confirm ("Enter ↵" — half-typed code is a parse error). Plain text fields currently auto-submit per keystroke (300ms debounce); the decided target is <strong>commit on Enter or blur, showing the Enter chip while dirty</strong> — the chip follows the confirm cycle in §5.5 (armed "Enter ↵" → faded ✓). Three live, typeable models and the decision record in <a href="text-commit-proposals.html"><code>text-commit-proposals.html</code></a>. Implementation pending; debounce ships until the blocks migrate.</div>
+<div class="callout"><strong>Commit convention (decided 2026-07-02):</strong> expression editors commit on explicit confirm ("Enter ↵" — half-typed code is a parse error). Plain text fields currently auto-submit per keystroke (300ms debounce); the decided target is <strong>commit on Enter or blur, showing the Enter chip while dirty</strong> — the chip follows the confirm cycle in §5.5 (armed "Enter ↵" → faded ✓). Three live, typeable models and the decision record in <a href="text-commit-proposals.html"><code>text-commit-proposals.html</code></a>. <strong>Implemented 2026-07-09:</strong> the shared drilldown engine (blockr.viz <code>drilldown-config.js</code>, vendored into blockr.ggplot), blockr.viz's summary-table label field, blockr.io's path input and blockr.dplyr's text fields all commit on Enter/blur with the chip; per-keystroke debounce survives only in genuine live-filter inputs (table quick-search).</div>
 <div class="demo">
   <div class="gallery-row">
     <div class="gallery-col">
