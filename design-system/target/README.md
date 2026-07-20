@@ -23,6 +23,11 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-move-vs-reorder.html](./outline-move-vs-reorder.html) — the two
+  same-style creation links (+ New block / + New chapter) and the drag
+  question: "position implies membership" (recommended) vs "membership is
+  explicit", both live, showing how the second manufactures split
+  "(continued)" chapters.
 - [outline-section-variants-live.html](./outline-section-variants-live.html)
   — the four creation gestures side by side, each driving the same live
   model (split / merge up / ungroup all work); pane C shows the drag
