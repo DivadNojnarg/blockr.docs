@@ -327,6 +327,16 @@ Derive the sepal <span class="gs">**ratio**</span>.
   recording: downlit's <code>pre.chroma</code> paints its own background <em>and</em>
   inherits a bootstrap border, so it reproduced the nested box until both were cleared —
   the surface owns the tint, the wrapper only carries token colors.</p>
+  <p style="margin:8px 0 0"><strong>Correction after seeing it in the dock:</strong> the
+  surface must <em>not</em> bleed to the panel edge, which is what the mocks above imply.
+  The dock paints its own light grey (<code>#f6f5f9</code>) behind every panel, so a grey
+  code surface running to the margin meets a grey background and the panel's boundary
+  disappears. These mockups only read well because the page behind them is white and the
+  card has a border. In the app the block is inset by the panel's padding — that white
+  gutter, plus a border of its own, is what makes it a defined surface rather than a flood
+  fill. Still one frame: the header lives inside that same border. Related: no
+  <code>overflow: hidden</code> on the block, or it becomes the scroll container and the
+  sticky header stops sticking; the two ends carry the rounding instead.</p>
   <p style="margin:0" class="hint">Original recommendation, kept for the record:</p>
   <p style="margin:4px 0 0"><strong>B, with D's sticky behaviour folded in.</strong>
   It is the one that is literally GitHub, it kills the nesting, and the filename strip

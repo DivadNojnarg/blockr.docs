@@ -66,7 +66,10 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
   card, and where copy belongs (decided 2026-07-20: C + B's header — one
   full-bleed tinted surface under a sticky file header naming report.R /
   report.qmd, copy moved onto the code, toolbar restyled to the segmented
-  control drawn there; implemented in blockr.outline).
+  control drawn there; implemented in blockr.outline). Note the correction
+  recorded on the page: the surface is inset by the panel padding, NOT bled to
+  the edge — the dock's own grey sits behind every panel, so a full-bleed grey
+  erases the panel boundary. Mockups on a white page hide this.
 - [outline-document-styling-proposals.html](./outline-document-styling-proposals.html)
   — how the outline's document column styles chapter title, lead and collapse
   (principle: color groups, typography ranks; decided 2026-07-20: B, the
