@@ -23,6 +23,10 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-insert-proposals.html](./outline-insert-proposals.html) — adding
+  blocks from the outline and the rewiring rule it implies (proposed: A,
+  boundary ⊕ rail, insert-after only; real graph surgery stays in the dag —
+  undecided).
 - [outline-reorder-proposals.html](./outline-reorder-proposals.html) — the
   reorder affordance for the outline's rare order-free boundaries (decided
   2026-07-20: B, the overlay grip — floats in the column gap so it reserves
