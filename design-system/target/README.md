@@ -23,6 +23,11 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-titles-and-headings.html](./outline-titles-and-headings.html) —
+  whether stack/block titles should become document headings, live over
+  one board (stack-only / plus blocks / overrides / start level / none);
+  naming: stack in the app, section in the output. Proposed: asymmetric
+  default + overrides + level as a document property. Undecided.
 - [outline-move-chapters.html](./outline-move-chapters.html) — moving a
   WHOLE chapter: the handle decides the scope (chip = block, heading =
   chapter), chapters land only at chapter boundaries, legality is the DAG
