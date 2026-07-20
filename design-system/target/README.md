@@ -61,6 +61,12 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
   reorder affordance for the outline's rare order-free boundaries (decided
   2026-07-20: B, the overlay grip — floats in the column gap so it reserves
   no space; rendered only where the DAG permits a move; implemented).
+- [outline-code-preview-proposals.html](./outline-code-preview-proposals.html) — the
+  R script / Document code preview: the grey box nested inside the panel's own
+  card, and where copy belongs (decided 2026-07-20: C + B's header — one
+  full-bleed tinted surface under a sticky file header naming report.R /
+  report.qmd, copy moved onto the code, toolbar restyled to the segmented
+  control drawn there; implemented in blockr.outline).
 - [outline-document-styling-proposals.html](./outline-document-styling-proposals.html)
   — how the outline's document column styles chapter title, lead and collapse
   (principle: color groups, typography ranks; decided 2026-07-20: B, the

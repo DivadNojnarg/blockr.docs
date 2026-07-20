@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outline code preview — surface and copy affordance</title>
+<style>
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-100: #dbeafe; --blockr-blue-600: #2563eb;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    /* chroma (catppuccin latte), lifted from syntax-highlight.css */
+    --ch-fg: #4c4f69; --ch-k: #8839ef; --ch-nf: #1e66f5; --ch-nv: #dc8a78;
+    --ch-s: #40a02b; --ch-c: #9ca0b0; --ch-o: #04a5e5; --ch-m: #fe640b;
+    --ch-gh: #fe640b; --ch-na: #1e66f5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-grey-900); background: #fff; line-height: 1.55; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-grey-200); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: 4px; padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-grey-500); margin-top: 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400); }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-base { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .tag-no { background: #fee2e2; color: #991b1b; }
+  .callout { border-left: 3px solid var(--blockr-blue-600); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 8px; }
+
+  /* ---- the dock panel these previews live in ---- */
+  .panel { border: 1px solid var(--blockr-grey-200); border-radius: 10px; background: #fff;
+           box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); overflow: hidden; max-width: 640px; }
+  .panel-pad { padding: 12px 16px; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+             padding: 12px 16px 10px; }
+  .segbtns { display: inline-flex; border: 1px solid var(--blockr-grey-200); border-radius: 7px; overflow: hidden; }
+  .segbtns button { border: 0; background: #fff; font-size: var(--blockr-font-size-xs); padding: 5px 11px;
+                    color: var(--blockr-grey-700); cursor: pointer; font-family: inherit; }
+  .segbtns button.on { background: var(--blockr-grey-100); font-weight: var(--blockr-font-weight-medium); }
+  .tb-right { display: flex; align-items: center; gap: 7px; }
+  .mini { font-size: var(--blockr-font-size-xs); border: 1px solid var(--blockr-grey-200); background: #fff;
+          border-radius: 6px; padding: 4px 9px; color: var(--blockr-grey-700); font-family: inherit; }
+  .mini-primary { border-color: #86efac; background: #f0fdf4; color: #166534; }
+
+  /* ---- code surface ---- */
+  pre.code { font-family: var(--blockr-font-mono); font-size: 0.72rem; line-height: 1.65;
+             color: var(--ch-fg); margin: 0; white-space: pre-wrap; word-break: break-word; }
+  .k{color:var(--ch-k)} .nf{color:var(--ch-nf)} .nv{color:var(--ch-nv)} .s{color:var(--ch-s)}
+  .c{color:var(--ch-c)} .o{color:var(--ch-o)} .m{color:var(--ch-m)} .gh{color:var(--ch-gh);font-weight:600}
+  .na{color:var(--ch-na)} .gs{font-weight:700} .ge{font-style:italic}
+
+  /* current (nested boxes) */
+  .now-inner { background: var(--blockr-grey-100); border-radius: 6px; padding: 12px; }
+
+  /* A: flush, hover copy */
+  .surf-a { position: relative; padding: 4px 16px 16px; }
+  .surf-a .copyfloat { position: absolute; top: 6px; right: 12px; opacity: 0; transition: opacity .12s; }
+  .surf-a:hover .copyfloat { opacity: 1; }
+
+  /* B: github file header */
+  .fileblock { border-top: 1px solid var(--blockr-grey-200); }
+  .filehead { display: flex; align-items: center; justify-content: space-between;
+              padding: 7px 14px; background: var(--blockr-grey-50);
+              border-bottom: 1px solid var(--blockr-grey-200); }
+  .filename { font-family: var(--blockr-font-mono); font-size: var(--blockr-font-size-xs);
+              color: var(--blockr-grey-500); }
+  .filebody { padding: 14px 16px; background: #fff; }
+
+  /* C: tinted full-bleed */
+  .surf-c { position: relative; background: var(--blockr-grey-50); padding: 14px 16px;
+            border-top: 1px solid var(--blockr-grey-200); }
+  .surf-c .copyfloat { position: absolute; top: 8px; right: 12px; opacity: 0; transition: opacity .12s; }
+  .surf-c:hover .copyfloat { opacity: 1; }
+
+  /* D: sticky copy */
+  .surf-d { position: relative; padding: 4px 16px 16px; max-height: 210px; overflow-y: auto; }
+  .surf-d .copysticky { position: sticky; top: 4px; float: right; margin-left: 8px; }
+
+  .iconbtn { display: inline-flex; align-items: center; gap: 5px; font-size: var(--blockr-font-size-xs);
+             border: 1px solid var(--blockr-grey-200); background: #fff; color: var(--blockr-grey-500);
+             border-radius: 6px; padding: 3px 8px; cursor: pointer; font-family: inherit;
+             box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); }
+  .iconbtn:hover { color: var(--blockr-grey-900); border-color: var(--blockr-grey-300); background: #fff; }
+  .iconbtn.bare { border-color: transparent; box-shadow: none; background: transparent; }
+  .iconbtn.bare:hover { background: var(--blockr-grey-100); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--blockr-grey-200);
+           vertical-align: top; }
+  th { font-size: var(--blockr-font-size-xs); text-transform: uppercase; letter-spacing: .04em;
+       color: var(--blockr-grey-400); font-weight: var(--blockr-font-weight-medium); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Outline code preview — surface and copy affordance</h1>
+<p class="lede">The R script and Document views put a grey rounded box inside the panel's
+own white card. Two frames, nested, for one piece of content. These are four ways to
+collapse that to one surface and move copy onto the code itself.</p>
+
+<h2>Where we are now <span class="tag tag-no">problem</span></h2>
+<p>The code sits in <code>.blockr-otl-raw</code> — grey fill, 6px radius, 12px padding —
+which is itself inside the panel's padded white card. The copy button lives up in the
+toolbar next to Render, far from the thing it copies, and reads as a document-level
+action rather than a code action.</p>
+
+<div class="panel">
+  <div class="toolbar">
+    <div class="segbtns">
+      <button>Outline</button><button>R script</button><button class="on">Document</button>
+    </div>
+    <div class="tb-right">
+      <button class="mini">html ▾</button>
+      <button class="mini mini-primary">Render</button>
+      <button class="mini" title="copy">⧉</button>
+    </div>
+  </div>
+  <div class="panel-pad">
+    <div class="now-inner">
+<pre class="code"><span class="c">---</span>
+<span class="na">title</span><span class="c">:</span><span class="s"> "Iris pilot report"</span>
+<span class="c">---</span>
+
+<span class="gh"># Data prep</span>
+
+Everything the analysis consumes.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-data</span>
+<span class="nv">data</span> <span class="o">&lt;-</span> <span class="nf">datasets</span><span class="nf">::</span><span class="nf">iris</span>
+<span class="c">```</span></pre>
+    </div>
+  </div>
+</div>
+<p class="hint">Box in a box: the grey card's corners sit 16px inside the white card's corners.</p>
+
+<h2>A — Flush surface, copy on hover <span class="tag tag-base">lightest</span></h2>
+<p>Drop the grey fill and the radius entirely. Code sits directly on the panel, which is
+already a card. Copy is a ghost button in the top-right that fades in on hover, the way
+GitHub does it on a README code block. Nothing frames the code but the panel itself.</p>
+
+<div class="panel">
+  <div class="toolbar">
+    <div class="segbtns">
+      <button>Outline</button><button>R script</button><button class="on">Document</button>
+    </div>
+    <div class="tb-right">
+      <button class="mini">html ▾</button>
+      <button class="mini mini-primary">Render</button>
+    </div>
+  </div>
+  <div class="surf-a">
+    <span class="copyfloat"><button class="iconbtn">⧉ Copy</button></span>
+<pre class="code"><span class="c">---</span>
+<span class="na">title</span><span class="c">:</span><span class="s"> "Iris pilot report"</span>
+<span class="c">---</span>
+
+<span class="gh"># Data prep</span>
+
+Everything the analysis consumes.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-data</span>
+<span class="nv">data</span> <span class="o">&lt;-</span> <span class="nf">datasets</span><span class="nf">::</span><span class="nf">iris</span>
+<span class="c">```</span></pre>
+  </div>
+</div>
+<p class="hint">Hover the code area to see the copy button. Toolbar loses its copy button.</p>
+
+<h2>B — GitHub file header <span class="tag tag-rec">decided (header kept)</span></h2>
+<p>What GitHub actually does for a file: one bordered region, a slim header strip naming
+the file with the actions on the right, then the code. The header replaces the nesting —
+there is still only one frame, and it earns its keep by saying <em>what</em> you are
+looking at, which the two views currently never state.</p>
+
+<div class="panel">
+  <div class="toolbar">
+    <div class="segbtns">
+      <button>Outline</button><button>R script</button><button class="on">Document</button>
+    </div>
+    <div class="tb-right">
+      <button class="mini">html ▾</button>
+      <button class="mini mini-primary">Render</button>
+    </div>
+  </div>
+  <div class="fileblock">
+    <div class="filehead">
+      <span class="filename">report.qmd</span>
+      <span><button class="iconbtn bare">⧉ Copy</button></span>
+    </div>
+    <div class="filebody">
+<pre class="code"><span class="c">---</span>
+<span class="na">title</span><span class="c">:</span><span class="s"> "Iris pilot report"</span>
+<span class="c">---</span>
+
+<span class="gh"># Data prep</span>
+
+Everything the analysis consumes.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-data</span>
+<span class="nv">data</span> <span class="o">&lt;-</span> <span class="nf">datasets</span><span class="nf">::</span><span class="nf">iris</span>
+<span class="c">```</span></pre>
+    </div>
+  </div>
+</div>
+<p class="hint">The filename tracks the view: <code>report.qmd</code> / <code>report.R</code>.
+Copy is always visible, no hover needed.</p>
+
+<h2>C — Tinted full-bleed <span class="tag tag-rec">decided (with B's header)</span></h2>
+<p>If the tint is worth keeping — it does separate code from chrome at a glance — then
+bleed it to the panel edges and drop the radius. It reads as a <em>surface</em> rather
+than a card floating inside a card, so the nesting disappears without losing the
+contrast.</p>
+
+<div class="panel">
+  <div class="toolbar">
+    <div class="segbtns">
+      <button>Outline</button><button>R script</button><button class="on">Document</button>
+    </div>
+    <div class="tb-right">
+      <button class="mini">html ▾</button>
+      <button class="mini mini-primary">Render</button>
+    </div>
+  </div>
+  <div class="surf-c">
+    <span class="copyfloat"><button class="iconbtn">⧉ Copy</button></span>
+<pre class="code"><span class="c">---</span>
+<span class="na">title</span><span class="c">:</span><span class="s"> "Iris pilot report"</span>
+<span class="c">---</span>
+
+<span class="gh"># Data prep</span>
+
+Everything the analysis consumes.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-data</span>
+<span class="nv">data</span> <span class="o">&lt;-</span> <span class="nf">datasets</span><span class="nf">::</span><span class="nf">iris</span>
+<span class="c">```</span></pre>
+  </div>
+</div>
+
+<h2>D — Flush, sticky copy <span class="tag tag-base">for long documents</span></h2>
+<p>Same surface as A, but copy stays pinned to the top-right while you scroll. A full qmd
+runs well past one screen, so a copy button that scrolls away is a copy button you have
+to scroll back for. Scroll the block below.</p>
+
+<div class="panel">
+  <div class="toolbar">
+    <div class="segbtns">
+      <button>Outline</button><button>R script</button><button class="on">Document</button>
+    </div>
+    <div class="tb-right">
+      <button class="mini">html ▾</button>
+      <button class="mini mini-primary">Render</button>
+    </div>
+  </div>
+  <div class="surf-d">
+    <span class="copysticky"><button class="iconbtn">⧉ Copy</button></span>
+<pre class="code"><span class="c">---</span>
+<span class="na">title</span><span class="c">:</span><span class="s"> "Iris pilot report"</span>
+<span class="c">---</span>
+
+<span class="gh"># Data prep</span>
+
+Everything the analysis consumes: the raw data, the species restriction
+and the derived ratio.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-data</span>
+<span class="c">#| tbl-cap: "Iris data"</span>
+<span class="nv">data</span> <span class="o">&lt;-</span> <span class="nf">datasets</span><span class="nf">::</span><span class="nf">iris</span>
+<span class="nv">data</span>
+<span class="c">```</span>
+
+Drop <span class="ge">*virginica*</span>: the two remaining species overlap.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-filt</span>
+<span class="nv">filt</span> <span class="o">&lt;-</span> <span class="nf">dplyr</span><span class="nf">::</span><span class="nf">filter</span>(<span class="nv">data</span>, <span class="nv">Species</span> <span class="o">%in%</span> <span class="nf">c</span>(<span class="s">"setosa"</span>, <span class="s">"versicolor"</span>))
+<span class="nv">filt</span>
+<span class="c">```</span>
+
+Derive the sepal <span class="gs">**ratio**</span>.
+
+<span class="c">```{r}</span>
+<span class="c">#| label: tbl-mut</span>
+<span class="nv">mut</span> <span class="o">&lt;-</span> <span class="nf">dplyr</span><span class="nf">::</span><span class="nf">mutate</span>(<span class="nv">filt</span>, <span class="nv">ratio</span> <span class="o">=</span> <span class="nv">Sepal.Length</span><span class="o">/</span><span class="nv">Sepal.Width</span>)
+<span class="nv">mut</span>
+<span class="c">```</span></pre>
+  </div>
+</div>
+
+<h2>Side by side</h2>
+<table>
+  <tr><th>&nbsp;</th><th>Frames</th><th>Copy</th><th>Says what it is</th><th>Cost</th></tr>
+  <tr><td><strong>Now</strong></td><td>2 (nested)</td><td>toolbar, detached</td><td>no</td><td>—</td></tr>
+  <tr><td><strong>A</strong> flush</td><td>1</td><td>hover, on the code</td><td>no</td><td>~6 lines CSS</td></tr>
+  <tr><td><strong>B</strong> file header</td><td>1</td><td>always visible, in the header</td><td>yes, filename</td><td>~15 lines + markup</td></tr>
+  <tr><td><strong>C</strong> tinted</td><td>1</td><td>hover, on the code</td><td>no</td><td>~6 lines CSS</td></tr>
+  <tr><td><strong>D</strong> sticky</td><td>1</td><td>hover + pinned while scrolling</td><td>no</td><td>~8 lines CSS</td></tr>
+</table>
+
+<div class="callout">
+  <p style="margin:0 0 8px"><strong>Decided 2026-07-20: C plus B's header, implemented in
+  blockr.outline.</strong> The tinted full-bleed surface from C, carrying C's contrast, under
+  B's file header naming <code>report.R</code> / <code>report.qmd</code> with copy in it.
+  The header is <code>position: sticky</code>, so D's benefit comes along for free. The
+  toolbar was restyled to the segmented control and small neutral buttons drawn here, and
+  its copy button now hides itself whenever the file header is on screen (keyed off the
+  header existing, not off the view name, so the two cannot disagree). One trap worth
+  recording: downlit's <code>pre.chroma</code> paints its own background <em>and</em>
+  inherits a bootstrap border, so it reproduced the nested box until both were cleared —
+  the surface owns the tint, the wrapper only carries token colors.</p>
+  <p style="margin:0" class="hint">Original recommendation, kept for the record:</p>
+  <p style="margin:4px 0 0"><strong>B, with D's sticky behaviour folded in.</strong>
+  It is the one that is literally GitHub, it kills the nesting, and the filename strip
+  answers a question the current views leave open — whether you are looking at
+  <code>report.R</code> or <code>report.qmd</code>, which right now you can only infer
+  from which segment is highlighted. Making the header <code>position: sticky</code>
+  keeps copy reachable in a long document for free.</p>
+</div>
+
+<p class="hint">One knock-on either way: the toolbar's copy button goes away in these two
+views. The Outline view has no visible code surface, so it keeps its toolbar copy button
+(it copies the whole script from the hidden buffer).</p>
+
+</main>
+</body>
+</html>
