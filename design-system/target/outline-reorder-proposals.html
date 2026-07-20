@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outline reorder — affordance for a rare action</title>
+<style>
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-100: #dbeafe; --blockr-blue-600: #2563eb;
+    --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --stack-analysis: #d97706; --stack-data: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: 0.875rem; color: var(--blockr-grey-900); background: #fff; line-height: 1.55; }
+  main { max-width: 940px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: 600; margin: 52px 0 10px; padding-top: 22px;
+       border-top: 1px solid var(--blockr-grey-200); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: 4px; padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-grey-500); margin-top: 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400); }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: 500;
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-base { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .callout { border-left: 3px solid var(--blockr-blue-600); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: 8px; padding: 18px 22px;
+           margin: 14px 0; background: var(--blockr-grey-50); }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: 500; color: var(--blockr-grey-500);
+       border-bottom: 1px solid var(--blockr-grey-200); padding: 6px 12px 6px 0;
+       font-size: var(--blockr-font-size-xs); text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 8px 12px 8px 0; vertical-align: top; }
+
+  /* ---- shared mini-outline mock ---- */
+  .mock { background: #fff; border: 1px solid var(--blockr-grey-200); border-radius: 8px;
+          box-shadow: var(--blockr-shadow); padding: 14px 18px; max-width: 620px;
+          display: grid; grid-template-columns: 150px 1fr; column-gap: 14px; position: relative; }
+  .m-gut { grid-column: 1; position: relative; padding: 3px 0; }
+  .m-gut::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+                   background: var(--stack-analysis); opacity: 0.35; }
+  .m-sec { grid-column: 2; margin: 3px 0; position: relative; }
+  .chip { display: flex; align-items: center; gap: 6px; margin-left: 10px; padding: 4px 6px;
+          border-radius: 6px; border: 1px solid transparent; }
+  .chip:hover { background: var(--blockr-blue-50); border-color: var(--blockr-blue-100); }
+  .tile { width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; display: flex;
+          align-items: center; justify-content: center; font-size: 12px;
+          background: #fff7ed; border: 1px solid #fed7aa; }
+  .rname { flex: 1; min-width: 0; font-size: var(--blockr-font-size-xs); }
+  .sw { position: relative; width: 26px; height: 15px; border-radius: 999px; flex-shrink: 0;
+        background: var(--stack-analysis); }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 13px; width: 11px; height: 11px;
+               border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+  .sect { border: 1px solid transparent; border-radius: 6px; padding: 6px 10px; }
+  .sect .prose { font-size: var(--blockr-font-size-sm); margin: 0 0 6px; color: var(--blockr-grey-700); }
+  .sect pre { margin: 0; font-family: var(--blockr-font-mono); font-size: 0.7rem; line-height: 1.5;
+              background: var(--blockr-grey-50); border: 1px solid var(--blockr-grey-100);
+              border-radius: 5px; padding: 6px 9px; }
+
+  /* ============ A. reorder mode ============ */
+  .m-toolbar { grid-column: 1 / 3; display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .btn-reorder { display: inline-flex; align-items: center; gap: 5px; font-size: var(--blockr-font-size-xs);
+                 padding: 3px 10px; border-radius: 5px; border: 1px solid var(--blockr-grey-200);
+                 background: #fff; color: var(--blockr-grey-500); cursor: pointer; }
+  .btn-reorder.active { background: var(--blockr-blue-50); border-color: var(--blockr-blue-100);
+                        color: var(--blockr-blue-600); }
+  .mock.reordering .chip.movable { background: #fff; border: 1px dashed var(--blockr-blue-100);
+                                   cursor: grab; }
+  .mock.reordering .chip.movable::after { content: "⠿"; color: var(--blockr-grey-400);
+                                          font-size: 12px; margin-left: 4px; }
+  .mock.reordering .chip.pinned, .mock.reordering .m-sec { opacity: 0.45; }
+  .mock.reordering .chip.movable + * { opacity: 1; }
+
+  /* ============ B. overlay grip ============ */
+  .b-grip { position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+            width: 14px; height: 18px; display: flex; align-items: center; justify-content: center;
+            color: var(--blockr-grey-400); opacity: 0; cursor: grab; }
+  .chip { position: relative; }
+  .chip:hover .b-grip { opacity: 1; }
+
+  /* ============ D. boundary swap ============ */
+  .swapline { grid-column: 1 / 3; position: relative; height: 0; }
+  .swapbtn { position: absolute; left: 150px; top: -13px; z-index: 3; display: inline-flex;
+             align-items: center; gap: 4px; font-size: 10px; font-weight: 500; padding: 2px 8px;
+             border-radius: 999px; border: 1px solid var(--blockr-blue-100);
+             background: #fff; color: var(--blockr-blue-600); cursor: pointer;
+             opacity: 0; transition: opacity 0.12s ease; box-shadow: var(--blockr-shadow); }
+  .mock:hover .swapbtn { opacity: 1; }
+  .swapbtn:hover { background: var(--blockr-blue-50); }
+</style>
+</head>
+<body>
+<main>
+<h1>Outline reorder — the affordance for a rare action</h1>
+<p class="lede">Fourth round. Findings against the shipped hover-grip: (1) the grip participates in the
+chip's flex row, so rows with a grip have their switch at a different x than pinned rows — content
+shifts; (2) a six-dot glyph that appears on hover explains nothing — "how could I move these blocks?".
+Constraints: reordering is <strong>rare</strong> (only DAG-parallel neighbours qualify at all), so the
+affordance must cost nothing when unused, must not disturb alignment, and must explain itself when it
+matters. Mock: "Analysis subset" is pinned; "Sepal scatter" and "QC glance" are the swappable pair.</p>
+
+<h2>Baseline <span class="tag tag-base">shipped</span></h2>
+<p>Hover-revealed six-dot grip right of the switch, rendered only for movable blocks — misaligns the
+switch column and communicates nothing.</p>
+
+<h2>A — explicit reorder mode</h2>
+<p>A small "Reorder" toggle in the outline toolbar. Normal mode shows <em>zero</em> reorder chrome —
+perfect alignment, nothing to explain. Entering the mode dims everything immutable and turns the
+movable chips into obvious drag targets (dashed outline, grip, grab cursor). A mode is heavy
+machinery, but this is the classic treatment for rare-but-real rearranging (photo apps, playlist
+edit mode), and it doubles as the place where future bulk operations (restack, renumber) could live.</p>
+<div class="stage">
+  <div class="stage-label">A — click "Reorder" to enter / leave the mode</div>
+  <div class="mock" id="vA">
+    <div class="m-toolbar">
+      <button class="btn-reorder" onclick="document.getElementById('vA').classList.toggle('reordering'); this.classList.toggle('active')">
+        &#8645; Reorder
+      </button>
+    </div>
+    <div class="m-gut"><div class="chip pinned"><span class="tile">✂️</span><span class="rname">Analysis subset</span><span class="sw"></span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Narrow to the first 25 rows.</p><pre>sub &lt;- head |&gt; head(n = 25)</pre></div></div>
+    <div class="m-gut"><div class="chip movable"><span class="tile">📊</span><span class="rname">Sepal scatter</span><span class="sw"></span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Sepal length against sepal width.</p><pre>plot &lt;- plot(sub[["Sepal.Length"]], ...)</pre></div></div>
+    <div class="m-gut"><div class="chip movable"><span class="tile">✂️</span><span class="rname">QC glance</span><span class="sw"></span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Last rows of the analysis set.</p><pre>audit &lt;- sub |&gt; tail(n = 3)</pre></div></div>
+  </div>
+</div>
+
+<h2>B — overlay grip (minimal repair)</h2>
+<p>Keep the shipped behaviour but position the grip absolutely, floating in the column gap outside the
+chip — it occupies no flex space, so every switch aligns whether a block is movable or not. Cheapest
+fix; still hover-only and still mute about what dragging means. Honest framing: this repairs the looks
+complaint but not the discoverability one.</p>
+<div class="stage">
+  <div class="stage-label">B — hover a movable chip; the grip floats in the gap, nothing shifts</div>
+  <div class="mock">
+    <div class="m-gut"><div class="chip"><span class="tile">✂️</span><span class="rname">Analysis subset</span><span class="sw"></span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Narrow to the first 25 rows.</p><pre>sub &lt;- head |&gt; head(n = 25)</pre></div></div>
+    <div class="m-gut"><div class="chip"><span class="tile">📊</span><span class="rname">Sepal scatter</span><span class="sw"></span><span class="b-grip">&#10495;</span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Sepal length against sepal width.</p><pre>plot &lt;- plot(sub[["Sepal.Length"]], ...)</pre></div></div>
+    <div class="m-gut"><div class="chip"><span class="tile">✂️</span><span class="rname">QC glance</span><span class="sw"></span><span class="b-grip">&#10495;</span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Last rows of the analysis set.</p><pre>audit &lt;- sub |&gt; tail(n = 3)</pre></div></div>
+  </div>
+</div>
+
+<h2>D — boundary swap <span class="tag tag-rec">recommended</span></h2>
+<p>Drop dragging entirely. Wherever two <em>adjacent</em> sections are genuinely order-free, a small
+"⇅ swap" pill sits on the boundary between them (revealed while the outline is hovered). One click
+swaps the pair. The affordance appears exactly where a choice exists and nowhere else, needs no
+explanation, and no row carries any chrome — alignment is untouched by construction. Any permutation
+of a longer parallel run is reachable by adjacent swaps. This also matches the reality that reordering
+decisions are local: "should the QC glance come before or after the plot?"</p>
+<div class="stage">
+  <div class="stage-label">D — hover the outline; click "swap" on the boundary</div>
+  <div class="mock" id="vD">
+    <div class="m-gut"><div class="chip"><span class="tile">✂️</span><span class="rname">Analysis subset</span><span class="sw"></span></div></div>
+    <div class="m-sec"><div class="sect"><p class="prose">Narrow to the first 25 rows.</p><pre>sub &lt;- head |&gt; head(n = 25)</pre></div></div>
+    <div class="swap-a">
+      <div class="m-gut"><div class="chip"><span class="tile">📊</span><span class="rname">Sepal scatter</span><span class="sw"></span></div></div>
+      <div class="m-sec"><div class="sect"><p class="prose">Sepal length against sepal width.</p><pre>plot &lt;- plot(sub[["Sepal.Length"]], ...)</pre></div></div>
+    </div>
+    <div class="swapline"><button class="swapbtn" onclick="swapD()">&#8645; swap</button></div>
+    <div class="swap-b">
+      <div class="m-gut"><div class="chip"><span class="tile">✂️</span><span class="rname">QC glance</span><span class="sw"></span></div></div>
+      <div class="m-sec"><div class="sect"><p class="prose">Last rows of the analysis set.</p><pre>audit &lt;- sub |&gt; tail(n = 3)</pre></div></div>
+    </div>
+  </div>
+</div>
+
+<h2>C — row menu (for completeness)</h2>
+<p>A tiny ⋮ on chip hover opening "Move up / Move down" entries, enabled only where valid. Familiar
+and explicit, but it adds a menu layer for two actions the boundary pill expresses in one click, and
+the hover-⋮ has the same discoverability ceiling as the grip. Not mocked; listed for the record.</p>
+
+<h2>Comparison</h2>
+<table>
+  <tr><th>Variant</th><th>Alignment</th><th>Discoverable?</th><th>Cost when unused</th><th>Mechanism</th></tr>
+  <tr><td><strong>A</strong> reorder mode</td><td>Perfect</td><td>High (labelled button)</td><td>One toolbar button</td><td>Drag, in a mode</td></tr>
+  <tr><td><strong>B</strong> overlay grip</td><td>Perfect</td><td>Low (unchanged)</td><td>None</td><td>Drag</td></tr>
+  <tr><td><strong>D</strong> boundary swap</td><td>Perfect</td><td>High (labelled, in place)</td><td>None</td><td>One click per swap</td></tr>
+  <tr><td><strong>C</strong> row menu</td><td>Perfect</td><td>Low-medium</td><td>None</td><td>Menu clicks</td></tr>
+</table>
+
+<div class="callout"><strong>Recommendation: D.</strong> It deletes the drag machinery instead of
+decorating it: a labelled one-click pill exactly at each order-free boundary. Nothing to learn,
+nothing rendered anywhere else, alignment untouched. If boards with long parallel runs ever make
+pairwise swapping tedious, A's explicit mode is the escalation path — the two compose (D always on,
+A added later) without conflict.</div>
+
+<p class="hint">Decision record for blockr.outline; supersedes the grip from the gutter/reorder rounds.
+The movability computation (DAG slack per adjacent pair) stays as shipped — it becomes the rule for
+which boundaries get a pill.</p>
+
+<script>
+  function swapD() {
+    var m = document.getElementById('vD');
+    var a = m.querySelector('.swap-a'), line = m.querySelector('.swapline'),
+        b = m.querySelector('.swap-b');
+    m.insertBefore(b, a);
+    m.insertBefore(line, a);
+  }
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board outline — blocks left, code right (linked two-pane)</title>
+<style>
+  /* ---- tokens (target set, see design-system.html) ---- */
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-100: #dbeafe; --blockr-blue-600: #2563eb;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-color-text-secondary: var(--blockr-grey-700);
+    --blockr-color-text-muted: var(--blockr-grey-500);
+    --blockr-color-text-subtle: var(--blockr-grey-400);
+    --blockr-color-border: var(--blockr-grey-200);
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-radius-lg: 8px; --blockr-radius-md: 6px; --blockr-radius-sm: 4px;
+    --blockr-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --stack-data: #2563eb;      /* Data prep accent */
+    --stack-analysis: #d97706;  /* Analysis accent */
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-grey-900); background: #fff; line-height: 1.55; }
+  main { max-width: 1060px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-color-border); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: var(--blockr-radius-sm); padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-color-text-muted); margin-top: 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle); }
+  .callout { border-left: 3px solid var(--blockr-blue-600); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0; margin: 16px 0; }
+
+  /* ================= the two-pane stage ================= */
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: var(--blockr-radius-lg);
+           padding: 18px; margin: 14px 0; background: var(--blockr-grey-50); }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-color-text-subtle);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .outline { position: relative; display: flex; gap: 26px; align-items: flex-start; }
+  #wire { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+
+  /* ---- left rail: panel-navigator styling ---- */
+  .rail { width: 275px; flex-shrink: 0; background: #fff; border: 1px solid var(--blockr-color-border);
+          border-radius: var(--blockr-radius-lg); box-shadow: var(--blockr-shadow); padding: 10px; }
+  .rail-title { font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-semibold);
+                text-transform: uppercase; letter-spacing: 0.06em; color: var(--blockr-color-text-muted);
+                padding: 2px 6px 8px; }
+  .grp { margin-bottom: 10px; }
+  .ghd { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: var(--blockr-radius-md);
+         background: color-mix(in srgb, var(--accent) 9%, white); cursor: default; }
+  .ghd .bar { width: 4px; height: 16px; border-radius: 2px; background: var(--accent); }
+  .ghd .glabel { font-size: var(--blockr-font-size-sm); font-weight: var(--blockr-font-weight-semibold);
+                 color: var(--blockr-grey-700); flex: 1; }
+  .gpill { font-size: 10px; color: var(--blockr-color-text-muted); background: #fff;
+           border: 1px solid var(--blockr-color-border); border-radius: 999px; padding: 0 7px; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-top: 3px;
+         border-radius: var(--blockr-radius-md); cursor: pointer; border: 1px solid transparent;
+         transition: background 0.12s ease, border-color 0.12s ease; }
+  .row:hover, .row.hot { background: var(--blockr-blue-50); border-color: var(--blockr-blue-100); }
+  .tile { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center;
+          justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .tile.data { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .tile.transform { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .tile.plot { background: #fff7ed; border: 1px solid #fed7aa; }
+  .rname { flex: 1; font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-900);
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row.off .rname { color: var(--blockr-color-text-subtle); }
+  .row.off .tile { filter: grayscale(1); opacity: 0.65; }
+  .sw { position: relative; width: 30px; height: 17px; border-radius: 999px; flex-shrink: 0;
+        background: var(--blockr-grey-300); transition: background 0.15s ease; }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px;
+               border-radius: 50%; background: #fff; transition: left 0.15s ease;
+               box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+  .row.on .sw { background: var(--accent, var(--blockr-blue-600)); }
+  .row.on .sw::after { left: 15px; }
+  .rail-note { font-size: 10px; color: var(--blockr-color-text-subtle); padding: 4px 6px 0; }
+
+  /* ---- right pane: the code / report source ---- */
+  .codepane { flex: 1; min-width: 0; background: #fff; border: 1px solid var(--blockr-color-border);
+              border-radius: var(--blockr-radius-lg); box-shadow: var(--blockr-shadow); padding: 16px 18px; }
+  .chapter { display: flex; align-items: center; gap: 9px; margin: 14px 0 8px; }
+  .chapter:first-child { margin-top: 0; }
+  .chapter .bar { width: 4px; height: 15px; border-radius: 2px; background: var(--accent); }
+  .chapter .ch-label { font-size: var(--blockr-font-size-sm); font-weight: var(--blockr-font-weight-semibold);
+                       color: var(--blockr-grey-700); }
+  .chapter .ch-md { font-family: var(--blockr-font-mono); font-size: 10px; color: var(--blockr-color-text-subtle); }
+  .sect { border: 1px solid transparent; border-radius: var(--blockr-radius-md); padding: 8px 12px;
+          margin-bottom: 10px; cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease; }
+  .sect:hover, .sect.hot { background: var(--blockr-blue-50); border-color: var(--blockr-blue-100); }
+  .sect .prose { font-size: var(--blockr-font-size-sm); color: var(--blockr-color-text-secondary); margin: 0 0 7px; }
+  .sect .prose strong { font-weight: var(--blockr-font-weight-semibold); }
+  .sect pre { margin: 0; font-family: var(--blockr-font-mono); font-size: 0.76rem; line-height: 1.55;
+              background: var(--blockr-grey-50); border-radius: var(--blockr-radius-sm); padding: 8px 11px;
+              overflow-x: auto; }
+  .sect.off { opacity: 0.55; }
+  .sect.off .prose { display: none; }
+  .chip { display: inline-flex; font-size: 9px; font-weight: var(--blockr-font-weight-medium);
+          letter-spacing: 0.04em; text-transform: uppercase; color: var(--blockr-grey-500);
+          background: var(--blockr-grey-100); border-radius: 999px; padding: 1px 7px; margin-bottom: 5px; }
+  .sect:not(.off) .chip { display: none; }
+  /* hand-rolled chroma-ish colors */
+  .cm { color: #8b9490; font-style: italic; }     /* comment */
+  .fn { color: #1d4ed8; }                          /* function */
+  .st { color: #b45309; }                          /* string */
+  .nb { color: #047857; }                          /* number */
+  .op { color: #6b7280; }                          /* operator */
+</style>
+</head>
+<body>
+<main>
+<h1>Board outline — blocks left, code right</h1>
+<p class="lede">Variant A of the "link blocks with code" idea: the
+<a href="../../../_blockr.design/open/panel-navigator/">panel-navigator</a> rail on the left (stacks as
+colored groups, one row per block, in the board's linear order) and the generated report source from the
+block-docs pilot on the right (stack = chapter, block = prose + chunk). One object, two readings, linked.</p>
+
+<div class="stage">
+  <div class="stage-label">Interactive — hover a row or a code section (the wire follows); click to jump; flip a switch to pull a block out of the report</div>
+  <div class="outline" id="outline">
+    <svg id="wire"></svg>
+
+    <!-- ============ left: the navigator rail ============ -->
+    <div class="rail">
+      <div class="rail-title">Blocks</div>
+      <div class="grp" style="--accent: var(--stack-data);">
+        <div class="ghd"><span class="bar"></span><span class="glabel">Data prep</span><span class="gpill" id="pill-data">2 in report</span></div>
+        <div class="row on" data-blk="data"><span class="tile data">🗄</span><span class="rname">Iris data</span><span class="sw"></span></div>
+        <div class="row" data-blk="head"><span class="tile transform">✂️</span><span class="rname">First 50 rows</span><span class="sw"></span></div>
+      </div>
+      <div class="grp" style="--accent: var(--stack-analysis);">
+        <div class="ghd"><span class="bar"></span><span class="glabel">Analysis</span><span class="gpill" id="pill-analysis">1 in report</span></div>
+        <div class="row on" data-blk="plot"><span class="tile plot">📊</span><span class="rname">Sepal scatter</span><span class="sw"></span></div>
+      </div>
+      <div class="rail-note">switch = include in report · dashboard visibility stays on the dock</div>
+    </div>
+
+    <!-- ============ right: the report source ============ -->
+    <div class="codepane">
+      <div class="chapter" style="--accent: var(--stack-data);"><span class="bar"></span>
+        <span class="ch-label">Data prep</span><span class="ch-md">#' # Data prep</span></div>
+
+      <div class="sect" data-blk="data">
+        <p class="prose">The classic <strong>iris</strong> dataset: 150 flowers, three species, four size
+        measurements. Used here as stand-in study data.</p>
+        <pre><span class="cm">#+ data</span>
+data <span class="op">&lt;-</span> datasets<span class="op">::</span><span class="fn">iris</span>
+data</pre>
+      </div>
+
+      <div class="sect off" data-blk="head">
+        <span class="chip">include=FALSE · runs, not shown</span>
+        <pre><span class="cm">#+ head, include=FALSE</span>
+head <span class="op">&lt;-</span> data <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">50</span>)</pre>
+      </div>
+
+      <div class="chapter" style="--accent: var(--stack-analysis);"><span class="bar"></span>
+        <span class="ch-label">Analysis</span><span class="ch-md">#' # Analysis</span></div>
+
+      <div class="sect" data-blk="plot">
+        <p class="prose">Sepal length against sepal width, per species. <strong>Setosa separates
+        cleanly</strong>; versicolor and virginica overlap.</p>
+        <pre><span class="cm">#+ plot</span>
+plot <span class="op">&lt;-</span> <span class="fn">plot</span>(head[[<span class="st">"Sepal.Length"</span>]], head[[<span class="st">"Sepal.Width"</span>]])
+plot</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>What the mock encodes</h2>
+<ul>
+  <li><strong>Stack = chapter.</strong> The stack's colored bar reappears as the chapter heading in the
+      source (<code>#' # Data prep</code>), so the navigator's grouping and the report's sectioning are
+      the same structure. Stacks finally do double duty: dashboard organisation and document outline.</li>
+  <li><strong>Order rule.</strong> Both panes share one linearization: stacks ordered by their earliest
+      block in dependency order, blocks in topo order within the stack. If a dependency forces a block
+      out of its stack's span, it renders where the topo order puts it and its stack bar is shown split
+      (not mocked here; rare in practice).</li>
+  <li><strong>The switch is report inclusion, not dock visibility.</strong> In this surface the rail is
+      the report's outline, so the one switch means "in the report". Flipping it off dims the code
+      section to an <code>include=FALSE</code> stub and drops the prose; the group pill recounts.
+      Dashboard visibility keeps living where it lives today (dock tabs, panel navigator proper).</li>
+  <li><strong>Row ↔ section sync.</strong> Hover either side and the wire connects the pair; click jumps
+      and flashes. This is the affordance that teaches "a block is a piece of code".</li>
+  <li><strong>Code voice.</strong> The mock shows blockr.code-style idiomatic pipes rather than the
+      pilot's <code>local()</code>/<code>with()</code> wrapping — the readable voice this view wants.</li>
+</ul>
+
+<div class="callout"><strong>Where it would live:</strong> a widened "Code &amp; report" sidebar (or a
+dock view of its own) built from two existing parts — the panel navigator's rail
+(<code>feat/panel-navigator-dock</code>, PR #253) and the pilot's live code pane
+(<code>feat/block-docs-pilot</code>). The sync layer (shared linearization + hover wire) is the only new
+machinery.</div>
+
+<p class="hint">Mock only: three hard-coded blocks, hand-colored code, no real markdown or dockview.
+Decision record for the block-docs pilot spec; follows description-style-proposals.html (band = decided B).</p>
+
+<script>
+  const outline = document.getElementById('outline');
+  const wire = document.getElementById('wire');
+
+  function pair(id) {
+    return {
+      row: document.querySelector('.row[data-blk="' + id + '"]'),
+      sect: document.querySelector('.sect[data-blk="' + id + '"]')
+    };
+  }
+
+  function drawWire(id) {
+    const {row, sect} = pair(id);
+    const o = outline.getBoundingClientRect();
+    const a = row.getBoundingClientRect();
+    const b = sect.getBoundingClientRect();
+    const x1 = a.right - o.left, y1 = a.top + a.height / 2 - o.top;
+    const x2 = b.left - o.left, y2 = b.top + Math.min(b.height / 2, 30) - o.top;
+    const mx = (x1 + x2) / 2;
+    const accent = getComputedStyle(row.closest('.grp')).getPropertyValue('--accent') || '#2563eb';
+    wire.innerHTML =
+      '<path d="M' + x1 + ' ' + y1 + ' C' + mx + ' ' + y1 + ' ' + mx + ' ' + y2 + ' ' + x2 + ' ' + y2 +
+      '" fill="none" stroke="' + accent + '" stroke-width="2" opacity="0.55"/>' +
+      '<circle cx="' + x1 + '" cy="' + y1 + '" r="3" fill="' + accent + '"/>' +
+      '<circle cx="' + x2 + '" cy="' + y2 + '" r="3" fill="' + accent + '"/>';
+  }
+
+  function clearWire() { wire.innerHTML = ''; }
+
+  function setHot(id, on) {
+    const {row, sect} = pair(id);
+    row.classList.toggle('hot', on);
+    sect.classList.toggle('hot', on);
+    on ? drawWire(id) : clearWire();
+  }
+
+  document.querySelectorAll('[data-blk]').forEach(el => {
+    const id = el.dataset.blk;
+    el.addEventListener('mouseenter', () => setHot(id, true));
+    el.addEventListener('mouseleave', () => setHot(id, false));
+    el.addEventListener('click', ev => {
+      if (ev.target.classList.contains('sw')) return;
+      const {row, sect} = pair(id);
+      const target = el.classList.contains('row') ? sect : row;
+      target.scrollIntoView({behavior: 'smooth', block: 'center'});
+      target.animate([{background: '#dbeafe'}, {background: 'transparent'}], {duration: 900});
+    });
+  });
+
+  document.querySelectorAll('.row .sw').forEach(sw => {
+    sw.addEventListener('click', ev => {
+      ev.stopPropagation();
+      const row = sw.closest('.row');
+      const id = row.dataset.blk;
+      row.classList.toggle('on');
+      const on = row.classList.contains('on');
+      pair(id).sect.classList.toggle('off', !on);
+      const grp = row.closest('.grp');
+      const n = grp.querySelectorAll('.row.on').length;
+      grp.querySelector('.gpill').textContent = n + ' in report';
+      drawWire(id);
+    });
+  });
+</script>
+</main>
+</body>
+</html>

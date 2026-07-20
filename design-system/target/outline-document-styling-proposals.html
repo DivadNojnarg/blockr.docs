@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outline document styling — title, lead, collapse</title>
+<style>
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-100: #dbeafe; --blockr-blue-600: #2563eb;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem; --blockr-font-size-xs: 0.75rem;
+    --blockr-font-weight-medium: 500; --blockr-font-weight-semibold: 600;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --stack-data: #2563eb; --stack-analysis: #d97706;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-grey-900); background: #fff; line-height: 1.55; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: var(--blockr-font-weight-semibold); margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: var(--blockr-font-weight-semibold); margin: 52px 0 10px;
+       padding-top: 22px; border-top: 1px solid var(--blockr-grey-200); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: 4px; padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-grey-500); margin-top: 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400); }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: var(--blockr-font-weight-medium);
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-base { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .callout { border-left: 3px solid var(--blockr-blue-600); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: 8px;
+           padding: 22px 26px; margin: 14px 0; background: var(--blockr-grey-50); }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: var(--blockr-font-weight-medium); color: var(--blockr-grey-500);
+       border-bottom: 1px solid var(--blockr-grey-200); padding: 6px 12px 6px 0;
+       font-size: var(--blockr-font-size-xs); text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 8px 12px 8px 0; vertical-align: top; }
+
+  /* ---- shared document-column mock pieces ---- */
+  .doc { background: #fff; border: 1px solid var(--blockr-grey-200); border-radius: 8px;
+         box-shadow: var(--blockr-shadow); padding: 20px 26px; max-width: 640px; }
+  .doc .sect { margin: 8px 0 14px; }
+  .doc .prose { font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-700); margin: 0 0 7px; }
+  .doc pre { margin: 0; font-family: var(--blockr-font-mono); font-size: 0.72rem; line-height: 1.5;
+             background: var(--blockr-grey-50); border: 1px solid var(--blockr-grey-100);
+             border-radius: 5px; padding: 7px 10px; overflow-x: auto; }
+  .doc .off { opacity: 0.55; }
+  .doc .offchip { display: inline-flex; font-size: 9px; font-weight: 500; letter-spacing: 0.04em;
+                  text-transform: uppercase; color: var(--blockr-grey-500);
+                  background: var(--blockr-grey-100); border-radius: 999px; padding: 1px 7px;
+                  margin-bottom: 5px; }
+  .cm { color: #8b9490; font-style: italic; } .fn { color: #1d4ed8; }
+  .st { color: #b45309; } .nb { color: #047857; } .op { color: #6b7280; }
+  .chev { width: 15px; height: 15px; color: var(--blockr-grey-400); flex-shrink: 0;
+          transition: transform 0.15s ease; }
+  .collapsed-marker .chev { transform: rotate(-90deg); }
+  .count { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+           font-weight: 400; margin-left: 8px; }
+
+  /* ============ A. editorial ============ */
+  .a-chap { display: flex; align-items: center; gap: 7px; margin: 22px 0 2px; cursor: pointer; }
+  .a-chap:first-child { margin-top: 0; }
+  .a-title { font-size: 1.15rem; font-weight: var(--blockr-font-weight-semibold);
+             color: var(--blockr-grey-900); letter-spacing: -0.01em; }
+  .a-kick { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--accent); margin: 22px 0 0; }
+  .a-lead { font-size: 0.92rem; color: var(--blockr-grey-500); margin: 2px 0 14px; line-height: 1.5; }
+
+  /* ============ B. thread ============ */
+  .b-chapter { position: relative; padding-left: 16px; margin-bottom: 20px; }
+  .b-chapter::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 2px; width: 3px;
+                       border-radius: 2px; background: var(--accent); opacity: 0.8; }
+  .b-chapter.is-collapsed::before { bottom: auto; height: 20px; }
+  .b-chap { display: flex; align-items: center; gap: 7px; cursor: pointer; margin: 0 0 2px; }
+  .b-chap .chev { margin-left: -37px; margin-right: 15px; }
+  .b-title { font-size: 1.15rem; font-weight: var(--blockr-font-weight-semibold);
+             color: var(--blockr-grey-900); letter-spacing: -0.01em; }
+  .b-lead { font-size: 0.92rem; color: var(--blockr-grey-500); margin: 2px 0 12px; line-height: 1.5; }
+
+  /* ============ C. header band ============ */
+  .c-head { margin: 22px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--blockr-grey-200); }
+  .c-head:first-child { margin-top: 0; }
+  .c-chap { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+  .c-title { font-size: 1.15rem; font-weight: var(--blockr-font-weight-semibold);
+             color: var(--blockr-grey-900); letter-spacing: -0.01em;
+             box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--accent) 45%, white); }
+  .c-lead { font-size: 0.92rem; color: var(--blockr-grey-500); margin: 6px 0 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+<h1>Outline document styling — title, lead, collapse</h1>
+<p class="lede">Third round on the outline's document column (blockr.outline). Verdict on the current
+state: the tinted intro boxes read as callouts, not as a chapter's lead prose; the chapter titles are
+too small to carry a document; the chevron floats. Principle for this round: <strong>color's job is
+grouping, typography's job is hierarchy</strong> — the stack color should hold a chapter together
+without ever painting the prose. Three proposals, each showing title + lead + a section + an excluded
+stub + a collapsed chapter. Click any chapter title to collapse it.</p>
+
+<h2>Baseline — what ships today <span class="tag tag-base">baseline</span></h2>
+<p>Small bar-prefixed title, stack-tinted lead box, chevron hanging in the gutter gap. The lead box is
+the main offender: a colored panel says "callout / warning", while a chapter lead is just prose.</p>
+
+<h2>A — editorial: kicker + whitespace, color only as a label</h2>
+<p>Pure document typography. The stack asserts itself as a tiny uppercase <em>kicker</em> in the stack
+color above the title (the only colored ink), the title is a real heading, the lead is a classic
+standfirst: slightly larger, muted, no box. Grouping comes from whitespace rhythm — generous above a
+chapter, tight inside it. Weakness: on a long chapter the color cue is gone once the kicker scrolls
+away, so color "keeps stuff together" only weakly.</p>
+<div class="stage">
+  <div class="stage-label">A — editorial (click a title to collapse)</div>
+  <div class="doc" id="vA">
+    <div data-ch="prep" style="--accent: var(--stack-data);">
+      <div class="a-kick">Chapter 1</div>
+      <div class="a-chap" onclick="toggle('vA','prep',this)">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="a-title">Data prep</span><span class="count" hidden>2 blocks</span>
+      </div>
+      <p class="a-lead">Everything the analysis consumes: the raw data and the row restrictions.</p>
+      <div class="ch-body">
+        <div class="sect">
+          <p class="prose">The classic <strong>iris</strong> dataset: 150 flowers, three species,
+          four size measurements.</p>
+          <pre><span class="cm">#+ data</span>
+data <span class="op">&lt;-</span> datasets<span class="op">::</span><span class="fn">iris</span>
+data</pre>
+        </div>
+        <div class="sect off">
+          <span class="offchip">include=FALSE · runs, not shown</span>
+          <pre><span class="cm">#+ head, include=FALSE</span>
+head <span class="op">&lt;-</span> data <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">50</span>)</pre>
+        </div>
+      </div>
+    </div>
+    <div data-ch="ana" style="--accent: var(--stack-analysis);">
+      <div class="a-kick">Chapter 2</div>
+      <div class="a-chap" onclick="toggle('vA','ana',this)">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="a-title">Analysis</span><span class="count" hidden>2 blocks</span>
+      </div>
+      <p class="a-lead">The analysis set and what we plot from it.</p>
+      <div class="ch-body">
+        <div class="sect">
+          <p class="prose">Narrow to the first 25 rows as the analysis set.</p>
+          <pre><span class="cm">#+ sub</span>
+sub <span class="op">&lt;-</span> head <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">25</span>)
+sub</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>B — thread: one colored line brackets the whole chapter <span class="tag tag-rec">recommended</span></h2>
+<p>The stack color becomes a single thin line running down the chapter's left edge — title, lead and
+every section hang off the same thread (the pattern of a Slack thread or a diff gutter). This is
+"color keeps stuff together" in its most literal form: the line's <em>extent</em> IS the grouping, and
+it stays visible however long the chapter gets. Prose is never tinted. The lead is a plain standfirst
+as in A. Collapsing shrinks the thread to a stub next to the title — the collapse state is visible in
+the structure itself, not just in a rotated chevron.</p>
+<div class="stage">
+  <div class="stage-label">B — thread (click a title to collapse; watch the line shrink)</div>
+  <div class="doc" id="vB">
+    <div class="b-chapter" data-ch="prep" style="--accent: var(--stack-data);">
+      <div class="b-chap" onclick="toggle('vB','prep',this)">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="b-title">Data prep</span><span class="count" hidden>2 blocks</span>
+      </div>
+      <p class="b-lead">Everything the analysis consumes: the raw data and the row restrictions.</p>
+      <div class="ch-body">
+        <div class="sect">
+          <p class="prose">The classic <strong>iris</strong> dataset: 150 flowers, three species,
+          four size measurements.</p>
+          <pre><span class="cm">#+ data</span>
+data <span class="op">&lt;-</span> datasets<span class="op">::</span><span class="fn">iris</span>
+data</pre>
+        </div>
+        <div class="sect off">
+          <span class="offchip">include=FALSE · runs, not shown</span>
+          <pre><span class="cm">#+ head, include=FALSE</span>
+head <span class="op">&lt;-</span> data <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">50</span>)</pre>
+        </div>
+      </div>
+    </div>
+    <div class="b-chapter" data-ch="ana" style="--accent: var(--stack-analysis);">
+      <div class="b-chap" onclick="toggle('vB','ana',this)">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        <span class="b-title">Analysis</span><span class="count" hidden>2 blocks</span>
+      </div>
+      <p class="b-lead">The analysis set and what we plot from it.</p>
+      <div class="ch-body">
+        <div class="sect">
+          <p class="prose">Narrow to the first 25 rows as the analysis set.</p>
+          <pre><span class="cm">#+ sub</span>
+sub <span class="op">&lt;-</span> head <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">25</span>)
+sub</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>C — header band: title underlined in the stack color, lead inside the header</h2>
+<p>The chapter is introduced by a header unit: title with a short thick underline in the stack color
+(a "tab" of ink, not a box), the lead directly beneath, and a hairline rule closing the header before
+the sections start. Reads like a paper's section heading with abstract. Color is a compact, strong
+signal at the top; like A it does not extend down the chapter, and the hairline adds horizontal
+structure the outline otherwise avoids.</p>
+<div class="stage">
+  <div class="stage-label">C — header band (click a title to collapse)</div>
+  <div class="doc" id="vC">
+    <div data-ch="prep" style="--accent: var(--stack-data);">
+      <div class="c-head">
+        <div class="c-chap" onclick="toggle('vC','prep',this)">
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+            stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          <span class="c-title">Data prep</span><span class="count" hidden>2 blocks</span>
+        </div>
+        <p class="c-lead">Everything the analysis consumes: the raw data and the row restrictions.</p>
+      </div>
+      <div class="ch-body">
+        <div class="sect">
+          <p class="prose">The classic <strong>iris</strong> dataset: 150 flowers, three species,
+          four size measurements.</p>
+          <pre><span class="cm">#+ data</span>
+data <span class="op">&lt;-</span> datasets<span class="op">::</span><span class="fn">iris</span>
+data</pre>
+        </div>
+        <div class="sect off">
+          <span class="offchip">include=FALSE · runs, not shown</span>
+          <pre><span class="cm">#+ head, include=FALSE</span>
+head <span class="op">&lt;-</span> data <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">50</span>)</pre>
+        </div>
+      </div>
+    </div>
+    <div data-ch="ana" style="--accent: var(--stack-analysis);">
+      <div class="c-head">
+        <div class="c-chap" onclick="toggle('vC','ana',this)">
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+            stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          <span class="c-title">Analysis</span><span class="count" hidden>2 blocks</span>
+        </div>
+        <p class="c-lead">The analysis set and what we plot from it.</p>
+      </div>
+      <div class="ch-body">
+        <div class="sect">
+          <p class="prose">Narrow to the first 25 rows as the analysis set.</p>
+          <pre><span class="cm">#+ sub</span>
+sub <span class="op">&lt;-</span> head <span class="op">|&gt;</span> <span class="fn">head</span>(n <span class="op">=</span> <span class="nb">25</span>)
+sub</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Shared decisions (all variants)</h2>
+<ul>
+  <li><strong>Title is a real heading</strong>: 1.15rem semibold ink, chevron at its left in the
+      heading's own row (no gutter-hanging), whole title row clicks to collapse.</li>
+  <li><strong>Lead is prose, not a panel</strong>: slightly larger than body, muted grey, no
+      background, no border. It is the document's standfirst.</li>
+  <li><strong>Collapsed state</strong>: chevron rotates, body hides, a muted "N blocks" count appears
+      inline after the title — text, not a pill.</li>
+  <li><strong>The gutter rail keeps its spine</strong> as today: chips stay grouped by the same color
+      on the left, so the color story is consistent across both columns.</li>
+  <li>Splits: "(continued)" runs repeat the chapter treatment without the lead.</li>
+</ul>
+
+<h2>Comparison</h2>
+<table>
+  <tr><th>Variant</th><th>Where the color lives</th><th>Groups over length?</th><th>Noise added</th></tr>
+  <tr><td><strong>A</strong> editorial</td><td>Kicker word above the title</td><td>Weak (top only)</td><td>None — pure typography</td></tr>
+  <tr><td><strong>B</strong> thread</td><td>One thin line spanning the chapter</td><td>Strong — extent = grouping</td><td>One 3px line</td></tr>
+  <tr><td><strong>C</strong> header band</td><td>Underline tab + hairline rule</td><td>Weak (top only)</td><td>Horizontal rules</td></tr>
+</table>
+
+<div class="callout"><strong>Recommendation: B.</strong> It is the only variant where the color
+actually performs the grouping job over the chapter's full length — the thread bracket makes "what
+belongs to this chapter" visible at any scroll position, mirrors the gutter spine on the left, and the
+collapse animation (the line shrinking to a stub) explains itself. A's kicker ("Chapter 1") can be
+grafted onto B later if numbering is wanted in the rendered report too.</div>
+
+<p class="hint">Mock: document column only; gutter chips unchanged. Decision record for the
+blockr.outline extension; follows board-outline-gutter-proposals.html (implemented) and
+description-style-proposals.html (band = decided B, superseded inside the outline by this round).</p>
+
+<script>
+  function toggle(vid, ch, chapEl) {
+    var root = document.getElementById(vid);
+    var box = root.querySelector('[data-ch="' + ch + '"]');
+    var body = box.querySelector('.ch-body');
+    var lead = box.querySelector('.a-lead, .b-lead, .c-lead');
+    var count = box.querySelector('.count');
+    var collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? '' : 'none';
+    if (lead) lead.style.display = collapsed ? '' : 'none';
+    if (count) count.hidden = collapsed;
+    chapEl.classList.toggle('collapsed-marker', !collapsed);
+    box.classList.toggle('is-collapsed', !collapsed);
+  }
+</script>
+</main>
+</body>
+</html>
