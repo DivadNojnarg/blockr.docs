@@ -23,6 +23,11 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-section-operations.html](./outline-section-operations.html) —
+  ALL section (stack) operations on one page: what exists, the gesture
+  budget, the drag collision that rules out creation-by-drag, and the
+  rule "drag changes where a block is, clicking changes what the chapters
+  are" (proposed: implement B, drop C; undecided).
 - [outline-drag-to-create-mock.html](./outline-drag-to-create-mock.html) —
   interactive mock of variant C: drop zones that exist only during a drag,
   hidden where the DAG forbids the landing (drop on a heading = join,
