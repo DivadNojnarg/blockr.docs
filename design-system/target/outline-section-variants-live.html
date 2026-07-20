@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outline — section gestures, side by side and live</title>
+<style>
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-100: #dbeafe; --blockr-blue-600: #2563eb;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: 0.875rem; color: var(--blockr-grey-900); background: #fff; line-height: 1.55; }
+  main { max-width: 1000px; margin: 0 auto; padding: 32px 40px 120px; }
+  h1 { font-size: 1.6rem; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; font-weight: 600; margin: 42px 0 8px; padding-top: 18px;
+       border-top: 1px solid var(--blockr-grey-200); }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: 4px; padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-grey-500); margin-top: 0; }
+  .hint { font-size: 0.75rem; color: var(--blockr-grey-400); }
+  .pill { display: inline-block; font-size: 0.68rem; font-weight: 500; border-radius: 999px;
+          padding: 1px 8px; }
+  .rec { background: #dcfce7; color: #166534; }
+  .drop { background: #fee2e2; color: #991b1b; }
+  .callout { border-left: 3px solid var(--blockr-blue-600); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  .warn { border-left-color: #d97706; background: #fffbeb; }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: 8px; padding: 16px 18px;
+           margin: 12px 0; background: var(--blockr-grey-50); }
+  .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .stage-label { font-size: 0.7rem; color: var(--blockr-grey-400); text-transform: uppercase;
+                 letter-spacing: 0.05em; }
+  .reset { font-size: 0.7rem; padding: 2px 9px; border-radius: 6px; background: #fff;
+           border: 1px solid var(--blockr-grey-200); color: var(--blockr-grey-500); cursor: pointer; }
+  .reset:hover { color: var(--blockr-blue-600); }
+
+  /* ---------- shared outline rendering ---------- */
+  .mock { background: #fff; border: 1px solid var(--blockr-grey-200); border-radius: 8px;
+          box-shadow: var(--blockr-shadow); padding: 12px 16px;
+          display: grid; grid-template-columns: 132px 1fr; column-gap: 12px; }
+  .chap { grid-column: 2; display: flex; align-items: center; gap: 8px; padding: 13px 0 3px 10px;
+          position: relative; border-radius: 6px; }
+  .chap .cbar { position: absolute; left: -144px; bottom: 0; width: 3px; height: 19px;
+                background: var(--accent); opacity: .6; border-radius: 2px 2px 0 0; }
+  .chap .title { font-size: 1rem; font-weight: 600; }
+  .chap .acts { display: flex; gap: 8px; margin-left: 8px; opacity: 0; transition: opacity .12s; }
+  .chap:hover .acts { opacity: 1; }
+  .chap .acts span { font-size: 0.68rem; color: var(--blockr-grey-400); cursor: pointer; }
+  .chap .acts span:hover { color: var(--blockr-blue-600); }
+  .chap.joinable { background: var(--blockr-blue-50); box-shadow: inset 0 0 0 1px var(--blockr-blue-100); }
+  .gut { grid-column: 1; position: relative; padding: 2px 0; }
+  .gut::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+                 background: var(--accent); opacity: .35; }
+  .sec { grid-column: 2; margin: 2px 0; }
+  .chip { display: flex; align-items: center; gap: 6px; margin-left: 9px; padding: 3px 6px;
+          border-radius: 6px; border: 1px solid transparent; position: relative; }
+  .chip:hover { background: var(--blockr-blue-50); border-color: var(--blockr-blue-100); }
+  .tile { width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; display: flex;
+          align-items: center; justify-content: center; font-size: 11px;
+          background: color-mix(in srgb, var(--accent) 12%, white);
+          border: 1px solid color-mix(in srgb, var(--accent) 30%, white); }
+  .rname { flex: 1; font-size: 0.72rem; }
+  .sw { width: 24px; height: 14px; border-radius: 999px; background: var(--accent);
+        position: relative; flex-shrink: 0; }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 12px; width: 10px; height: 10px;
+               border-radius: 50%; background: #fff; }
+  .grip { position: absolute; right: -15px; top: 50%; transform: translateY(-50%); font-size: 11px;
+          color: var(--blockr-grey-400); opacity: 0; cursor: grab; }
+  .chip:hover .grip { opacity: 1; }
+  .body { padding: 4px 9px; font-size: 0.78rem; color: var(--blockr-grey-700); }
+  .addrow { grid-column: 2; display: flex; gap: 12px; padding: 1px 0 0 9px; font-size: 0.7rem;
+            color: var(--blockr-grey-400); opacity: 0; transition: opacity .12s; }
+  .rowwrap:hover .addrow { opacity: 1; }
+  .rowwrap { display: contents; }
+  .addrow span { cursor: pointer; }
+  .addrow span:hover { color: var(--blockr-blue-600); }
+
+  /* A: boundary pill */
+  .gapline { grid-column: 1 / 3; height: 0; position: relative; }
+  .gappill { position: absolute; left: 132px; top: -11px; font-size: 0.66rem; padding: 1px 8px;
+             border-radius: 999px; border: 1px dashed var(--blockr-grey-300); background: #fff;
+             color: var(--blockr-grey-400); cursor: pointer; opacity: 0; transition: opacity .12s; }
+  .mock:hover .gappill { opacity: 1; }
+  .gappill:hover { color: var(--blockr-blue-600); border-color: var(--blockr-blue-100);
+                   border-style: solid; }
+
+  /* C: drag zones + the collision */
+  .zone { grid-column: 1 / 3; height: 0; overflow: hidden; opacity: 0; transition: all .12s; }
+  .mock.dragging .zone { height: 26px; opacity: 1; margin: 3px 0; }
+  .zinner { height: 100%; border: 1px dashed var(--blockr-grey-300); border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; font-size: 0.66rem;
+            color: var(--blockr-grey-400); background: #fff; }
+  .zone.hot .zinner { border-color: #059669; border-style: solid; color: #059669;
+                      background: #ecfdf5; }
+  .reorderline { grid-column: 1 / 3; height: 0; position: relative; }
+  .mock.dragging .reorderline::before { content: "reorder here"; position: absolute; left: 132px;
+    top: -9px; font-size: 0.62rem; color: var(--blockr-blue-600); background: #fff; padding: 0 6px; }
+  .mock.dragging .reorderline::after { content: ""; position: absolute; left: 132px; right: 0;
+    top: 0; border-top: 2px solid var(--blockr-blue-600); opacity: .5; }
+  .log { font-size: 0.75rem; color: var(--blockr-blue-600); margin-top: 8px; min-height: 18px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Section gestures, side by side and live</h1>
+<p class="lede">The same four-block board in four panes. Each pane offers a different way to
+<strong>start a chapter</strong>, driving the same underlying operation — so the outcome is
+identical everywhere and only the gesture differs. Click around; use each pane's reset.</p>
+
+<h2>A — pill on the boundary</h2>
+<p>Hover the outline: a dashed pill sits in every gap. Clicking it cuts there — the blocks below
+become a new chapter.</p>
+<div class="stage">
+  <div class="bar"><span class="stage-label">A — hover the card, click a pill</span>
+    <button class="reset" data-reset="A">reset</button></div>
+  <div id="A"></div>
+  <div class="log" id="logA"></div>
+</div>
+
+<h2>B — link in the block row <span class="pill rec">recommended</span></h2>
+<p>Hover a block: "New chapter" sits beside "Add block", in the row that already holds every
+block-scoped action. Nothing else uses that target.</p>
+<div class="stage">
+  <div class="bar"><span class="stage-label">B — hover a block row, click "New chapter"</span>
+    <button class="reset" data-reset="B">reset</button></div>
+  <div id="B"></div>
+  <div class="log" id="logB"></div>
+</div>
+
+<h2>C — drag into the gap <span class="pill drop">collides</span></h2>
+<p>Drag a chip by its grip. Both meanings appear at once: the blue line ("reorder here") and the
+green zone ("new chapter here") compete for the same space — this is the collision, shown rather
+than described.</p>
+<div class="stage">
+  <div class="bar"><span class="stage-label">C — drag a chip; watch the two meanings overlap</span>
+    <button class="reset" data-reset="C">reset</button></div>
+  <div id="C"></div>
+  <div class="log" id="logC"></div>
+</div>
+
+<h2>D — chapter action "split below"</h2>
+<p>A fourth hover action on the chapter row. It can only cut at one fixed place (after the chapter's
+first block), so it cannot express "start a chapter <em>here</em>".</p>
+<div class="stage">
+  <div class="bar"><span class="stage-label">D — hover a chapter heading, click "split below"</span>
+    <button class="reset" data-reset="D">reset</button></div>
+  <div id="D"></div>
+  <div class="log" id="logD"></div>
+</div>
+
+<h2>Also shown in every pane</h2>
+<p>The already-implemented chapter actions are live too: <strong>merge up</strong> (removes a
+boundary) and <strong>ungroup</strong> (dissolves the chapter, blocks stay). Try creating a chapter,
+then merging it back — the pair is exact.</p>
+
+<div class="callout warn"><strong>What pane C demonstrates:</strong> a gap cannot mean two things.
+Any drag-based creation needs a modifier or a separate lane, both invisible — which is why the
+proposal is to keep drag for position/membership only.</div>
+
+<div class="callout"><strong>Still missing everywhere:</strong> taking a single block <em>out</em> of
+its chapter without dissolving the whole thing. Under the same rule it would be a third link in the
+block row ("no chapter") rather than another drop target.</div>
+
+<p class="hint">Mock only: no dependencies are enforced, so every cut is allowed here; the real thing
+also refuses splits the DAG cannot honour. Companion to outline-section-operations.html.</p>
+
+<script>
+const SEED = {
+  blocks: [
+    {id: 'data', name: 'Iris data',      icon: '🗄',  stack: 'prep'},
+    {id: 'head', name: 'First 50 rows',  icon: '✂️', stack: 'prep'},
+    {id: 'sub',  name: 'Analysis subset', icon: '✂️', stack: 'ana'},
+    {id: 'plot', name: 'Sepal scatter',  icon: '📊',  stack: 'ana'}
+  ],
+  stacks: {prep: {name: 'Data prep', color: '#2563eb'},
+           ana:  {name: 'Analysis',  color: '#d97706'}}
+};
+const PALETTE = ['#059669', '#7c3aed', '#db2777', '#0891b2'];
+const state = {};
+
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function log(v, msg) { document.getElementById('log' + v).textContent = msg; }
+
+function runs(s) {
+  const out = [];
+  s.blocks.forEach((b, i) => {
+    const prev = i ? s.blocks[i - 1] : null;
+    if (!prev || prev.stack !== b.stack) out.push({stack: b.stack, from: i, to: i});
+    else out[out.length - 1].to = i;
+  });
+  return out;
+}
+
+function splitAt(v, idx) {
+  const s = state[v], b = s.blocks[idx];
+  const id = 'c' + Object.keys(s.stacks).length;
+  s.stacks[id] = {name: 'New chapter', color: PALETTE[Object.keys(s.stacks).length % 4]};
+  const old = b.stack;
+  for (let i = idx; i < s.blocks.length && s.blocks[i].stack === old; i++) s.blocks[i].stack = id;
+  log(v, '→ new chapter starting at "' + b.name + '" (with the rest of its run)');
+  render(v);
+}
+
+function mergeUp(v, r) {
+  const s = state[v], rs = runs(s);
+  if (r === 0) { log(v, '→ nothing above to merge into'); return; }
+  const target = rs[r - 1].stack, run = rs[r];
+  for (let i = run.from; i <= run.to; i++) s.blocks[i].stack = target;
+  log(v, '→ merged into "' + s.stacks[target].name + '"');
+  render(v);
+}
+
+function ungroup(v, r) {
+  const s = state[v], run = runs(s)[r];
+  for (let i = run.from; i <= run.to; i++) s.blocks[i].stack = null;
+  log(v, '→ chapter dissolved; its blocks remain, unchaptered');
+  render(v);
+}
+
+function render(v) {
+  const s = state[v], host = document.getElementById(v);
+  const rs = runs(s);
+  let h = '<div class="mock" id="mock' + v + '">';
+
+  rs.forEach((run, r) => {
+    const st = run.stack ? s.stacks[run.stack] : null;
+    const accent = st ? st.color : '#9ca3af';
+
+    if (v === 'A' && r > 0) h += '<div class="gapline"></div>';
+
+    if (st) {
+      h += '<div class="chap" style="--accent:' + accent + '" data-run="' + r + '">' +
+        '<span class="cbar"></span><span class="title">' + st.name + '</span>' +
+        '<span class="acts">' +
+        (r > 0 ? '<span data-act="merge" data-run="' + r + '">merge up</span>' : '') +
+        '<span data-act="ungroup" data-run="' + r + '">ungroup</span>' +
+        (v === 'D' && run.to > run.from
+          ? '<span data-act="splitbelow" data-run="' + r + '">split below</span>' : '') +
+        '</span></div>';
+    }
+
+    for (let i = run.from; i <= run.to; i++) {
+      const b = s.blocks[i];
+      if (v === 'A' && i > run.from) {
+        h += '<div class="gapline"><span class="gappill" data-split="' + i +
+             '">✂ split here</span></div>';
+      }
+      if (v === 'C') {
+        h += '<div class="reorderline"></div>' +
+             '<div class="zone" data-gap="' + i + '"><div class="zinner">' +
+             '+ new chapter here</div></div>';
+      }
+      h += '<div class="rowwrap">' +
+        '<div class="gut" style="--accent:' + accent + '">' +
+          '<div class="chip" style="--accent:' + accent + '" draggable="' +
+            (v === 'C') + '" data-blk="' + b.id + '">' +
+            '<span class="tile">' + b.icon + '</span>' +
+            '<span class="rname">' + b.name + '</span><span class="sw"></span>' +
+            (v === 'C' ? '<span class="grip">⠿</span>' : '') +
+          '</div></div>' +
+        '<div class="sec"><div class="body">' + b.name + ' — description and code…</div></div>' +
+        (v === 'B'
+          ? '<div class="addrow"><span>+ Add block</span>' +
+            '<span data-split="' + i + '">⌐ New chapter</span></div>'
+          : '') +
+        '</div>';
+    }
+  });
+
+  if (v === 'A') h += '<div class="gapline"></div>';
+  h += '</div>';
+  host.innerHTML = h;
+  wire(v);
+}
+
+function wire(v) {
+  const host = document.getElementById(v);
+
+  host.querySelectorAll('[data-split]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); splitAt(v, +el.dataset.split); });
+  });
+  host.querySelectorAll('[data-act]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const r = +el.dataset.run;
+      if (el.dataset.act === 'merge') mergeUp(v, r);
+      else if (el.dataset.act === 'ungroup') ungroup(v, r);
+      else splitAt(v, runs(state[v])[r].from + 1);
+    });
+  });
+
+  if (v !== 'C') return;
+
+  const mock = document.getElementById('mockC');
+  let dragged = null;
+  mock.addEventListener('dragstart', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    dragged = chip.dataset.blk;
+    mock.classList.add('dragging');
+    log('C', 'Dragging "' + dragged + '" — note both meanings offered in the same gap.');
+  });
+  mock.addEventListener('dragover', e => {
+    const z = e.target.closest('.zone');
+    document.querySelectorAll('.zone.hot').forEach(x => x.classList.remove('hot'));
+    if (z) { e.preventDefault(); z.classList.add('hot'); }
+    else if (e.target.closest('.reorderline, .chap')) e.preventDefault();
+  });
+  mock.addEventListener('drop', e => {
+    const z = e.target.closest('.zone');
+    e.preventDefault();
+    if (z) splitAt('C', +z.dataset.gap);
+    else log('C', '→ ambiguous drop: reorder or new chapter? (the collision)');
+    mock.classList.remove('dragging');
+    dragged = null;
+  });
+  mock.addEventListener('dragend', () => {
+    mock.classList.remove('dragging');
+    document.querySelectorAll('.zone.hot').forEach(x => x.classList.remove('hot'));
+  });
+}
+
+['A', 'B', 'C', 'D'].forEach(v => { state[v] = clone(SEED); render(v); });
+document.querySelectorAll('[data-reset]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = btn.dataset.reset;
+    state[v] = clone(SEED);
+    log(v, '');
+    render(v);
+  });
+});
+</script>
+</main>
+</body>
+</html>

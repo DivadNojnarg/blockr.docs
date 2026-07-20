@@ -23,6 +23,10 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-section-variants-live.html](./outline-section-variants-live.html)
+  — the four creation gestures side by side, each driving the same live
+  model (split / merge up / ungroup all work); pane C shows the drag
+  collision instead of describing it.
 - [outline-section-operations.html](./outline-section-operations.html) —
   ALL section (stack) operations on one page: what exists, the gesture
   budget, the drag collision that rules out creation-by-drag, and the
