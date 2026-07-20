@@ -23,6 +23,10 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-drag-to-create-mock.html](./outline-drag-to-create-mock.html) —
+  interactive mock of variant C: drop zones that exist only during a drag,
+  hidden where the DAG forbids the landing (drop on a heading = join,
+  drop in a zone = new chapter). Preferred; not yet implemented.
 - [outline-new-section-proposals.html](./outline-new-section-proposals.html)
   — how to CREATE a chapter from the outline (proposed: A, a "split here"
   pill on the boundary, pairing with merge-up; undecided).
