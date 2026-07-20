@@ -23,6 +23,9 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-new-section-proposals.html](./outline-new-section-proposals.html)
+  — how to CREATE a chapter from the outline (proposed: A, a "split here"
+  pill on the boundary, pairing with merge-up; undecided).
 - [outline-insert-proposals.html](./outline-insert-proposals.html) — adding
   blocks from the outline and the rewiring rule it implies (proposed: A,
   boundary ⊕ rail, insert-after only; real graph surgery stays in the dag —
