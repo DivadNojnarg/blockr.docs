@@ -80,11 +80,15 @@
 
   /* drop line, tinted by the chapter it would join */
   .dropline { grid-column: 1 / 3; height: 0; position: relative; }
-  .dropline.on::after { content: ""; position: absolute; left: 0; right: 0; top: -1px;
-                        border-top: 2px solid var(--tint, var(--blockr-blue-600)); }
-  .dropline.on::before { content: attr(data-label); position: absolute; left: 132px; top: -10px;
+  .mock.dragging .dropline { height: 16px; margin: -2px 0; }
+  .mock.dragging .dropline::after { content: ""; position: absolute; left: 0; right: 0;
+                                    top: 50%; border-top: 1px dashed var(--blockr-grey-300); }
+  .mock.dragging .chip { cursor: grabbing; }
+  .mock.dragging .dropline.on::after { border-top: 2px solid var(--tint, var(--blockr-blue-600));
+                                        top: 50%; }
+  .dropline.on::before { content: attr(data-label); position: absolute; left: 132px; top: 0;
                          font-size: .62rem; padding: 0 6px; background: #fff; color: var(--tint);
-                         font-weight: 500; }
+                         font-weight: 500; z-index: 2; }
 </style>
 </head>
 <body>
@@ -190,7 +194,7 @@ function render(v) {
       h += '<div class="dropline" data-gap="'+i+'"></div>';
       h += '<div class="rowwrap">'+
         '<div class="gut" style="--accent:'+accent+'">'+
-          '<div class="chip" style="--accent:'+accent+'" draggable="true" data-blk="'+b.id+'">'+
+          '<div class="chip" style="--accent:'+accent+'" data-blk="'+b.id+'">'+
             '<span class="tile">'+b.icon+'</span><span class="rname">'+b.name+'</span>'+
             '<span class="sw"></span><span class="grip">⠿</span></div></div>'+
         '<div class="sec"><div class="body">'+b.name+' — description and code…</div></div>'+
@@ -206,59 +210,71 @@ function render(v) {
 function wire(v) {
   const mock = document.getElementById('m'+v);
   let dragged = null;
-  mock.addEventListener('dragstart', e => {
+
+  // Pointer dragging, not HTML5 drag-and-drop: works with a real mouse in
+  // every browser and needs no drag image or dataTransfer.
+  mock.addEventListener('mousedown', e => {
     const c = e.target.closest('.chip');
     if (!c) return;
+    e.preventDefault();
     dragged = c.dataset.blk;
     c.classList.add('dragging');
+    mock.classList.add('dragging');
   });
-  mock.addEventListener('dragover', e => {
-    const line = e.target.closest('.dropline');
-    mock.querySelectorAll('.dropline.on').forEach(l => l.classList.remove('on'));
-    if (!line || !dragged) return;
-    e.preventDefault();
-    const s = st[v], g = +line.dataset.gap;
+
+  document.addEventListener('mousemove', e => {
+    if (!dragged || !mock.classList.contains('dragging')) return;
+    const lines = [...mock.querySelectorAll('.dropline')];
+    let best = null, bestDist = Infinity;
+    lines.forEach(l => {
+      const r = l.getBoundingClientRect();
+      const d = Math.abs(e.clientY - (r.top + r.height / 2));
+      if (d < bestDist) { bestDist = d; best = l; }
+    });
+    lines.forEach(l => l.classList.remove('on'));
+    if (!best) return;
+    const s = st[v], g = +best.dataset.gap;
     if (v === 'R1') {
       const target = chapterAtGap(s, g);
       const stk = target ? s.stacks[target] : null;
-      line.style.setProperty('--tint', stk ? stk.color : '#6b7280');
-      line.dataset.label = stk ? '→ joins ' + stk.name : '→ no chapter';
+      best.style.setProperty('--tint', stk ? stk.color : '#6b7280');
+      best.dataset.label = stk ? '→ joins ' + stk.name : '→ no chapter';
     } else {
       const stk = s.stacks[s.blocks.find(b => b.id === dragged).stack];
-      line.style.setProperty('--tint', stk.color);
-      line.dataset.label = '→ stays in ' + stk.name;
+      best.style.setProperty('--tint', stk.color);
+      best.dataset.label = '→ stays in ' + stk.name;
     }
-    line.classList.add('on');
+    best.classList.add('on');
   });
-  mock.addEventListener('drop', e => {
-    const line = e.target.closest('.dropline');
-    if (!line || !dragged) return;
-    e.preventDefault();
-    const s = st[v], g = +line.dataset.gap;
-    const from = s.blocks.findIndex(b => b.id === dragged);
-    const blk = s.blocks[from];
-    const target = chapterAtGap(s, g);
-    s.blocks.splice(from, 1);
-    const to = g > from ? g - 1 : g;
-    s.blocks.splice(to, 0, blk);
-    if (v === 'R1') {
-      blk.stack = target;
-      log('R1', '→ "' + blk.name + '" moved and now belongs to ' +
-        (target ? s.stacks[target].name : 'no chapter'));
-    } else {
-      const nRuns = runs(s).length;
-      log('R2', '→ "' + blk.name + '" moved but kept its chapter' +
-        (nRuns > 2 ? ' — the document now shows a split "(continued)" chapter' : ''));
+
+  document.addEventListener('mouseup', () => {
+    if (!dragged) return;
+    const line = mock.querySelector('.dropline.on');
+    if (line) {
+      const s = st[v], g = +line.dataset.gap;
+      const from = s.blocks.findIndex(b => b.id === dragged);
+      const blk = s.blocks[from];
+      const target = chapterAtGap(s, g);
+      s.blocks.splice(from, 1);
+      const to = g > from ? g - 1 : g;
+      s.blocks.splice(to, 0, blk);
+      if (v === 'R1') {
+        blk.stack = target;
+        log('R1', '→ "' + blk.name + '" moved and now belongs to ' +
+          (target ? s.stacks[target].name : 'no chapter'));
+      } else {
+        const nRuns = runs(s).length;
+        log('R2', '→ "' + blk.name + '" moved but kept its chapter' +
+          (nRuns > 2 ? ' — the document now shows a split "(continued)" chapter' : ''));
+      }
+      dragged = null;
+      render(v);
+      return;
     }
-    cleanup();
-    render(v);
-  });
-  mock.addEventListener('dragend', cleanup);
-  function cleanup() {
-    mock.querySelectorAll('.dropline.on').forEach(l => l.classList.remove('on'));
-    mock.querySelectorAll('.chip.dragging').forEach(c => c.classList.remove('dragging'));
     dragged = null;
-  }
+    mock.classList.remove('dragging');
+    mock.querySelectorAll('.chip.dragging').forEach(c => c.classList.remove('dragging'));
+  });
 }
 
 ['R1','R2'].forEach(v => { st[v] = clone(SEED); render(v); });

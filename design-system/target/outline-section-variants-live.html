@@ -259,8 +259,7 @@ function render(v) {
       }
       h += '<div class="rowwrap">' +
         '<div class="gut" style="--accent:' + accent + '">' +
-          '<div class="chip" style="--accent:' + accent + '" draggable="' +
-            (v === 'C') + '" data-blk="' + b.id + '">' +
+          '<div class="chip" style="--accent:' + accent + '"  data-blk="' + b.id + '">' +
             '<span class="tile">' + b.icon + '</span>' +
             '<span class="rname">' + b.name + '</span><span class="sw"></span>' +
             (v === 'C' ? '<span class="grip">⠿</span>' : '') +
@@ -298,32 +297,39 @@ function wire(v) {
 
   if (v !== 'C') return;
 
+  // Pointer dragging (HTML5 drag-and-drop is unreliable in a static mock).
   const mock = document.getElementById('mockC');
-  let dragged = null;
-  mock.addEventListener('dragstart', e => {
-    const chip = e.target.closest('.chip');
-    if (!chip) return;
-    dragged = chip.dataset.blk;
-    mock.classList.add('dragging');
-    log('C', 'Dragging "' + dragged + '" — note both meanings offered in the same gap.');
-  });
-  mock.addEventListener('dragover', e => {
-    const z = e.target.closest('.zone');
-    document.querySelectorAll('.zone.hot').forEach(x => x.classList.remove('hot'));
-    if (z) { e.preventDefault(); z.classList.add('hot'); }
-    else if (e.target.closest('.reorderline, .chap')) e.preventDefault();
-  });
-  mock.addEventListener('drop', e => {
-    const z = e.target.closest('.zone');
+  let dragging = false;
+
+  mock.addEventListener('mousedown', e => {
+    if (!e.target.closest('.chip')) return;
     e.preventDefault();
-    if (z) splitAt('C', +z.dataset.gap);
-    else log('C', '→ ambiguous drop: reorder or new chapter? (the collision)');
-    mock.classList.remove('dragging');
-    dragged = null;
+    dragging = true;
+    mock.classList.add('dragging');
+    log('C', 'Dragging — note both meanings offered in the same gap.');
   });
-  mock.addEventListener('dragend', () => {
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const zones = [...mock.querySelectorAll('.zone')];
+    let best = null, bd = Infinity;
+    zones.forEach(z => {
+      const r = z.getBoundingClientRect();
+      const d = Math.abs(e.clientY - (r.top + r.height / 2));
+      if (d < bd) { bd = d; best = z; }
+    });
+    zones.forEach(z => z.classList.remove('hot'));
+    if (best && bd < 40) best.classList.add('hot');
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    const hot = mock.querySelector('.zone.hot');
+    dragging = false;
     mock.classList.remove('dragging');
-    document.querySelectorAll('.zone.hot').forEach(x => x.classList.remove('hot'));
+    if (hot) splitAt('C', +hot.dataset.gap);
+    else log('C', '→ dropped on a reorder line: was that a move or a new chapter? (the collision)');
+    mock.querySelectorAll('.zone.hot').forEach(z => z.classList.remove('hot'));
   });
 }
 
