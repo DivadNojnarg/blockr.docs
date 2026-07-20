@@ -23,6 +23,10 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
 
 - [text-commit-proposals.html](./text-commit-proposals.html) — when text
   fields commit (decided: commit on Enter/blur with an Enter chip while dirty).
+- [outline-move-chapters.html](./outline-move-chapters.html) — moving a
+  WHOLE chapter: the handle decides the scope (chip = block, heading =
+  chapter), chapters land only at chapter boundaries, legality is the DAG
+  one level up; dependencies are really enforced in this mock.
 - [outline-move-vs-reorder.html](./outline-move-vs-reorder.html) — the two
   same-style creation links (+ New block / + New chapter) and the drag
   question: "position implies membership" (recommended) vs "membership is
