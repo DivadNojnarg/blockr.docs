@@ -61,6 +61,12 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
   reorder affordance for the outline's rare order-free boundaries (decided
   2026-07-20: B, the overlay grip — floats in the column gap so it reserves
   no space; rendered only where the DAG permits a move; implemented).
+- [outline-render-group-proposals.html](./outline-render-group-proposals.html) — grouping
+  the toolbar's format picker + render action, then the action's label (decided
+  2026-07-21: split button — neutral picker fused to the green action, one pill; label is
+  "Download" not "Render" since render is the internal step; both toolbar groups share one
+  height and centre line, which needs the shinyWidgets form-group margin zeroed;
+  implemented in blockr.outline).
 - [outline-code-preview-proposals.html](./outline-code-preview-proposals.html) — the
   R script / Document code preview: the grey box nested inside the panel's own
   card, and where copy belongs (decided 2026-07-20: C + B's header — one
