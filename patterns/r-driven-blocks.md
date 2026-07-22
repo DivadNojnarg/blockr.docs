@@ -30,7 +30,7 @@ Server signature varies by block type:
 
 ## Reference implementation
 
-`blockr.core/R/transform-head.R:12` (`new_head_block()`) is the canonical minimal example.
+`blockr.core/R/transform-head.R:12` (`new_head_block()`) is the canonical minimal example. For a complete standalone package built this way (plot block, tests, registration, board demo — all green), copy [`../scaffolds/rblock`](../scaffolds/rblock).
 
 ```r
 new_head_block <- function(n = 6L, ...) {
@@ -168,10 +168,10 @@ Without a registration call, every constructor invocation emits `No block metada
 # R/zzz.R
 .onLoad <- function(libname, pkgname) {
   blockr.core::register_blocks(
-    ctor = "new_cat_facts_block",
-    name = "cat facts block",
-    description = "Fetch cat facts from catfact.ninja",
-    category = "input",
+    ctor = "new_myplot_block",
+    name = "My plot",
+    description = "Boxplot with jittered points by group",
+    category = "plot",
     package = pkgname
   )
 }
@@ -179,7 +179,7 @@ Without a registration call, every constructor invocation emits `No block metada
 
 Notes:
 - `register_blocks()` (plural) is the vectorised version — one call can register many blocks; `ctor`, `name`, `description`, `category` accept parallel character vectors.
-- `category` must be one of `blockr.core::suggested_categories()`: `input`, `transform`, `structured`, `plot`, `table`, `model`, `output`, `utility`, `uncategorized`. Anything else warns. Data-fetching blocks are `input`, not `data`.
+- `category` must be one of `blockr.core::suggested_categories()`: `input`, `transform`, `structured`, `plot`, `table`, `model`, `output`, `utility`, `uncategorized`. Anything else warns. Data-fetching blocks (API, file, database) are `input`, not `data`.
 - Pass `package = pkgname` from `.onLoad` so blocks are namespaced to your package.
 
 Full reference: `vignette("blocks-registry", package = "blockr.core")`.

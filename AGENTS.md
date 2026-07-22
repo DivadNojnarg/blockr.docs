@@ -12,6 +12,7 @@ If something would still be true six months from now after the code has moved, i
 ```
 decisions/      ADRs: numbered, dated, immutable. New ADR for any change of stance.
 patterns/       "How we build X". README.md is the chooser.
+scaffolds/      Copy-and-rename starter block packages (rblock, jsblock), tests green.
 design-system/  Colors, typography, spacing, shared components.
 testing/        testthat patterns, Playwright workflows, devtools::check.
 infra/          Dev container, git mount caveats, port forwarding.
@@ -25,7 +26,7 @@ Each folder has a `README.md` that indexes its contents. Start there.
 
 | Task | File |
 |---|---|
-| Start a new block | `patterns/README.md` (chooser) → `r-driven-blocks.md` or `js-driven-blocks.md` |
+| Start a new block | `patterns/README.md` (chooser) → `r-driven-blocks.md` or `js-driven-blocks.md`; new package → copy from `scaffolds/` |
 | Style a UI element | `design-system/` + `decisions/0001-hand-rolled-vs-libraries.md` |
 | Write tests for a block | `testing/` (and the testing section of the relevant pattern doc) |
 | Understand a past decision | `decisions/README.md` |

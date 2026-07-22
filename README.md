@@ -18,6 +18,7 @@ What does *not* belong:
 ```
 decisions/       — Architecture decision records (ADRs). Numbered, dated, immutable.
 patterns/        — "How we build X" guides: JS-driven blocks, column metadata forwarding, etc.
+scaffolds/       — Copy-and-rename starter block packages (rblock, jsblock), tests green.
 design-system/   — Colors, typography, spacing, shared component specs (select, input, …).
 testing/         — testthat patterns, Playwright e2e, devtools::check workflows.
 infra/           — Dev container, git mount caveats, port forwarding notes.

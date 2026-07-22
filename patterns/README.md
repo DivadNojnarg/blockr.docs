@@ -7,6 +7,8 @@ Durable "how we build X" guides for the blockr ecosystem.
 - [r-driven-blocks.md](./r-driven-blocks.md) — pure-R Shiny module returning `expr` + `state`. The default path; what most blocks should be.
 - [js-driven-blocks.md](./js-driven-blocks.md) — block whose UI is a custom JS class wired through a Shiny input binding. Reach for this when you need rich interaction (drag/drop, autocomplete, multi-row builders) that stock Shiny inputs can't deliver cleanly.
 
+Starting a new block package? Don't scaffold by hand: copy the matching starter package from [`../scaffolds/`](../scaffolds/) — the same working plot block built once per pattern, tests green, board demo included.
+
 ## Choosing between R-driven and JS-driven
 
 These are two valid patterns, not a default and a fallback. The right choice depends on the polish you need and the effort you can spend.

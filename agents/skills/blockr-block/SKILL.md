@@ -18,8 +18,9 @@ Add a new block to a blockr package the right way: pick a pattern, scaffold the 
 
 1. **Identify the package, block type, and what the block does.** Ask only if unclear. Most prompts include the data source and the parameters — that's enough.
 2. **Pick the pattern.** Default to **R-driven** for new packages, simple blocks, and first-time block authors. Pick **JS-driven** only if the user explicitly asks for it, OR the target package's existing blocks are uniformly JS-driven. Don't ask the user unless the package signals are mixed.
-3. **Pick a constructor name.** Convention: `new_<readable_form>_block()`. Split compound package suffixes on logical word boundaries (`blockr.catfacts` → `new_cat_facts_block`, `blockr.dplyr` → multiple — one per verb). Tell the user the chosen name in your first message so they can flag it before you write code.
-4. **Scaffold + register + test + verify** as one unit. Registration is not optional — see "Scaffolding checklist" below.
+3. **Pick a constructor name.** Convention: `new_<readable_form>_block()`. Split compound package suffixes on logical word boundaries (`blockr.timeline` → `new_event_timeline_block`, `blockr.dplyr` → multiple — one per verb). Tell the user the chosen name in your first message so they can flag it before you write code.
+4. **For a brand-new package, start from a scaffold, not a blank directory.** `blockr.docs/scaffolds/rblock` (R-driven) and `blockr.docs/scaffolds/jsblock` (JS-driven) are working plot-block packages that open green: tests pass, the block registers, `app.R` serves a dock board where it works. Copy, rename per `blockr.docs/scaffolds/README.md`, then morph the `myplot` block into the requested one — keeping the tests green at every step. Only fall back to file-by-file scaffolding when adding a block to an existing package.
+5. **Scaffold + register + test + verify** as one unit. Registration is not optional — see "Scaffolding checklist" below.
 
 ## Pattern reference
 
@@ -34,7 +35,7 @@ Reference: `blockr.docs/patterns/r-driven-blocks.md`.
 
 ### Scaffolding checklist
 
-For an existing package, write/update:
+Brand-new package: copy `blockr.docs/scaffolds/rblock` instead of writing these files from scratch (see "On invocation"). For an existing package, write/update:
 - `R/<name>_block.R` — constructor + server + UI in one file.
 - `R/zzz.R` — `.onLoad()` calling `blockr.core::register_blocks(ctor = ..., name = ..., description = ..., category = ..., package = pkgname)`. Always register; otherwise the constructor warns on every call.
 - `tests/testthat/test-<name>_block.R` — `testServer()`-based tests.
@@ -76,19 +77,24 @@ Two tiers, **no `shinytest2`**:
 
 Reference: `blockr.docs/patterns/js-driven-blocks.md`.
 
-Scaffold (four files):
+Brand-new package: copy `blockr.docs/scaffolds/jsblock` — it vendors the sync/lifecycle factory (`R/js-block.R`), loads the shared JS assets through blockr.dplyr's exported dependency functions, and ships typed JS (`tsconfig.json` + `inst/js/types.d.ts`) with all three test tiers green. Do not edit the vendored `R/js-block.R` beyond the single `pkg <-` rename line; the sync logic is the part that breeds bugs.
 
-- `inst/js/<name>-block.js` — JS class + Shiny input binding
+Per block, write/update (in an existing package or after copying the scaffold):
+
+- `inst/js/<name>-block.js` — JS class + `Blockr.registerBlock()` call
 - `inst/css/<name>-block.css` — block-specific CSS
-- `R/<name>_block.R` — R constructor with `expr_type = "bquoted"`, `external_ctrl = TRUE`, `allow_empty_state = "state"`
+- `R/<name>_block.R` — ~30-line constructor via the factory (`new_js_transform_block()` in blockr.dplyr, or the scaffold's `new_js_plot_block()` variant for plot blocks)
 - `R/expr-builders.R` — append the pure-R expression builder for the new block
+- `inst/js/types.d.ts` — the state interface FIRST; it is the R↔JS protocol contract
+- `DESCRIPTION` — bump `Version:` after every `inst/js` / `inst/css` edit (htmlDependency caches by package version)
 
-Reference implementations: `blockr.dplyr/R/filter_block.R` + `blockr.dplyr/inst/js/filter-block.js`.
+Reference implementations: `blockr.dplyr/R/mutate_block.R` (minimal), `R/filter_block.R` (with extras), `blockr.docs/scaffolds/jsblock` (plot block, standalone package).
 
 Rules that bite:
-- Single `state` reactiveVal whose name matches the constructor parameter.
-- Bidirectional sync requires the `self_write` env guard to prevent R→JS→R loops.
+- State field names must match the constructor's formals, exactly and in count.
+- Bidirectional sync requires the `self_write` env guard to prevent R→JS→R loops — the factory owns this; don't reimplement it.
 - Use `Blockr.Select` / `Blockr.Input` shared components rather than rolling your own dropdowns or inputs.
+- Run `npx -p typescript tsc` and keep it at zero errors.
 
 ### Testing (JS-driven)
 
@@ -96,7 +102,7 @@ Three tiers — `shinytest2` is necessary because `session$setInputs()` cannot d
 
 1. **Unit tests** for the expression builder in `R/expr-builders.R`. Use the `eval_bquoted` helper from the pattern doc.
 2. **`testServer()`** to verify constructor state → expression. Inject state via the constructor or push to `r_state` directly inside the test.
-3. **`shinytest2`** for the JS round-trip. Drive the block via `app$run_js()` calling `el._block.setState(...)` and `el._block._submit()`. Reference test app: `blockr.dplyr/tests/testthat/apps/dplyr-e2e/app.R`. Keep one happy-path test per block here — push everything else into Tiers 1 and 2.
+3. **`shinytest2`** for the JS round-trip. Drive the block via `app$run_js()` calling `el._block.setState(...)` and `el._block._submit()`. Reference test apps: `blockr.dplyr/tests/testthat/apps/dplyr-e2e/app.R` (many blocks, one board) and `blockr.docs/scaffolds/jsblock/tests/testthat/apps/e2e/` (single block, minimal). Keep one happy-path test per block here — push everything else into Tiers 1 and 2.
 
 ## Verification
 
@@ -150,7 +156,7 @@ serve(
 )
 ```
 
-**Transform / plot block.** Needs an upstream source feeding it:
+**Transform block.** Needs an upstream source AND a downstream consumer:
 
 ```r
 serve(
@@ -158,7 +164,7 @@ serve(
     blocks = c(
       data = new_dataset_block("iris"),   # upstream source
       mine = new_<name>_block(),          # the block under test
-      out  = new_scatter_block()          # downstream consumer (transform only)
+      out  = new_scatter_block()          # downstream consumer
     ),
     links = c(
       new_link(from = "data", to = "mine", input = "data"),
@@ -169,9 +175,26 @@ serve(
 )
 ```
 
+**Plot block.** A plot block has no data output — do NOT wire a consumer after it. Two blocks only:
+
+```r
+serve(
+  new_dock_board(
+    blocks = c(
+      data = new_dataset_block("iris"),   # upstream source
+      mine = new_<name>_block()           # the block under test
+    ),
+    links = c(new_link(from = "data", to = "mine", input = "data")),
+    extensions = new_dag_extension()
+  )
+)
+```
+
 **Join / variadic block.** Two or more upstream `new_dataset_block()`s linked into `x`/`y` (or `...args`).
 
-Then exercise the flow: for a data block, change its own inputs and confirm `out` updates; for the rest, edit the upstream source and confirm `mine` and its consumer update. Reacting to changes (not just rendering once) is what catches broken link inputs and state-name mismatches that `testServer()` and single-block `serve()` both miss.
+**Demo data.** When no built-in dataset has the right shape (event logs, longitudinal data, ...), build a small data.frame in `app.R` and feed it with `blockr.core::new_static_block(df)` in place of `new_dataset_block()`.
+
+Then exercise the flow: for a data block, change its own inputs and confirm `out` updates; for the rest, edit the upstream source and confirm `mine` (and its consumer, if any) update. With a static source there is nothing to edit upstream — verify reactivity through the block's own empty → configured transition instead. Reacting to changes (not just rendering once) is what catches broken link inputs and state-name mismatches that `testServer()` and single-block `serve()` both miss.
 
 If `blockr.dock` / `blockr.dag` aren't available, fall back to a plain `blockr.core::new_board(blocks = ..., links = ...)` with the same per-variant wiring — no dock UI or DAG view, but the data still flows end to end.
 

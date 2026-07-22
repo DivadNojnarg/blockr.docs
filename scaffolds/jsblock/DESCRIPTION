@@ -1,0 +1,33 @@
+Package: blockr.jsblock
+Title: Scaffold for a JS-Driven blockr Plot Block
+Version: 0.0.1
+Authors@R:
+    person("Your", "Name", , "you@example.com", role = c("aut", "cre"))
+Description: A minimal, working blockr plot block built the JS-driven way:
+    a JavaScript class owns the control UI (via the shared Blockr
+    components), R turns the JSON state into a ggplot2 expression. Copy
+    this package, rename it, and turn the myplot block into the
+    visualization you actually want. Tests are green from the first
+    commit -- keep them green.
+License: GPL (>= 3)
+Encoding: UTF-8
+Imports:
+    blockr.core,
+    blockr.dplyr (>= 0.2.0),
+    ggplot2,
+    htmltools,
+    shiny,
+    utils
+Suggests:
+    blockr.dag,
+    blockr.dock,
+    jsonlite,
+    shinytest2,
+    testthat (>= 3.0.0)
+Remotes:
+    cynkra/blockr.core,
+    BristolMyersSquibb/blockr.dplyr,
+    cynkra/blockr.dock,
+    cynkra/blockr.dag
+Config/testthat/edition: 3
+RoxygenNote: 7.3.2

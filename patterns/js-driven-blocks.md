@@ -9,7 +9,7 @@ Most of the pattern lives in two factories, so a new block is ~30 lines of R and
 - R: `new_js_transform_block()` in `blockr.dplyr/R/js-block.R` generates the server (state reactive, column push, bidirectional sync) and UI. Blocks with non-standard data arity compose the same pieces via `js_block_sync()` / `js_block_ui()` / `js_block_dep()`.
 - JS: `Blockr.registerBlock()` in `blockr.dplyr/inst/js/blockr-core.js` generates the input binding and message handlers.
 
-> **Where the factories live.** Today they are internal to `blockr.dplyr`; the plan is to move the shared JS/CSS layer (blockr-core.js, Blockr.Select, Blockr.Input, the factories, `types.d.ts`) to `blockr.ui` together with blockr.dock's assets. Until then, packages following this pattern either import `blockr.dplyr` (as `blockr.dm` does) or copy `js-block.R` + `blockr-core.js`.
+> **Where the factories live.** Today they are internal to `blockr.dplyr` — importing it gets you the exported dependency functions (`blockr_core_js_dep()`, `blockr_select_dep()`, …) and helpers, but NOT `new_js_transform_block()` / `js_block_sync()` / `js_block_ui()`. The plan is to move the shared JS/CSS layer (blockr-core.js, Blockr.Select, Blockr.Input, the factories, `types.d.ts`) to `blockr.ui` together with blockr.dock's assets. Until then, a new package should start from **`blockr.docs/scaffolds/jsblock`**: it vendors an adapted `R/js-block.R` (including a `new_js_plot_block()` variant) while loading all shared JS/CSS through the exported dependency functions, so nothing else gets copied. Keep the vendored file unedited so the eventual migration is a deletion.
 
 ## Anatomy
 
@@ -34,13 +34,15 @@ References: `blockr.dplyr/R/mutate_block.R` (minimal), `R/filter_block.R` (with 
 
 ## R constructor
 
+Flat formals — one constructor argument per state field, assembled into the `state` list. `names(state)` must equal the formals, exactly and in count: `blockr.core` restores a block by calling the constructor with the serialized fields.
+
 ```r
-new_my_block <- function(state = list(param1 = default1), ...) {
+new_my_block <- function(param1 = default1, param2 = NULL, ...) {
   new_js_transform_block(
     class = "my_block",
     name = "my",
-    state = state,
-    expr_fn = function(s) make_my_expr(s$param1 %||% default1),
+    state = list(param1 = param1, param2 = param2),
+    expr_fn = function(s) make_my_expr(s$param1 %||% default1, s$param2),
     ...
   )
 }
@@ -55,9 +57,9 @@ Factory arguments beyond the required four:
 
 Rules the factory enforces so you don't have to remember them:
 
-- The constructor keeps a literal `state` parameter and returns it via `state = list(state = r_state)` — `blockr.core` restores blocks by calling the constructor with the serialized state.
-- `expr_type = "bquoted"`, `external_ctrl = TRUE`, `allow_empty_state = "state"`.
-- No `req()` — an empty state returns the `.(data)` pass-through from the expression builder. An unconfigured block must be a no-op, never an error and never a data-destroying default (an empty summarize must not collapse to one row).
+- R holds the state as one `reactiveVal` per field (what external control and serialization need); the JS side sees it recombined as a single blob. The factory does both directions — don't reimplement the sync.
+- `expr_type = "bquoted"`, `external_ctrl = TRUE`, `allow_empty_state = TRUE` (every field may legitimately be empty on a fresh block).
+- No `req()` — an empty state returns the `.(data)` pass-through from the expression builder (transform), or a friendly placeholder plot (plot blocks — see the scaffold). An unconfigured block must be a no-op, never an error and never a data-destroying default (an empty summarize must not collapse to one row).
 
 Blocks whose server signature isn't `function(id, data)` (join's `function(id, x, y)`, bind's `function(id, ...args)`) keep a bespoke `new_transform_block()` call but compose `js_block_sync(input, session, name, input_name, r_state)` for the state sync and `js_block_ui(name, shared_deps)` for the UI.
 
@@ -284,7 +286,7 @@ test_that("filter block produces correct expression", {
 
 This is the part R-driven blocks don't need and JS-driven blocks can't do without. `shinytest2` is the only way to verify that the JS UI → input binding → R expression → evaluated result chain actually works end-to-end.
 
-The trick is that custom JS input bindings aren't reachable via `set_inputs()`. Drive the block by calling its JS API directly through `run_js()`:
+The trick is that custom JS input bindings aren't reachable via `set_inputs()`. Drive the block by calling its JS API directly through `run_js()`. The element id follows from the naming convention: `<board_id>-block_<block_id>-expr-<name>_input` (board id `"board"`, block id from the `blocks = c(...)` name, `<name>_input` from the block's kebab-case name with `-` → `_`):
 
 ```r
 set_block_state <- function(app, block_id, input_suffix, state) {

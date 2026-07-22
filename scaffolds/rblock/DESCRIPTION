@@ -1,0 +1,25 @@
+Package: blockr.rblock
+Title: Scaffold for an R-Driven blockr Plot Block
+Version: 0.0.1
+Authors@R:
+    person("Your", "Name", , "you@example.com", role = c("aut", "cre"))
+Description: A minimal, working blockr plot block built the R-driven way:
+    pure-R Shiny module, stock inputs, ggplot2 output. Copy this package,
+    rename it, and turn the myplot block into the visualization you actually
+    want. Tests are green from the first commit -- keep them green.
+License: GPL (>= 3)
+Encoding: UTF-8
+Imports:
+    blockr.core,
+    ggplot2,
+    shiny
+Suggests:
+    blockr.dag,
+    blockr.dock,
+    testthat (>= 3.0.0)
+Remotes:
+    cynkra/blockr.core,
+    cynkra/blockr.dock,
+    cynkra/blockr.dag
+Config/testthat/edition: 3
+RoxygenNote: 7.3.2
