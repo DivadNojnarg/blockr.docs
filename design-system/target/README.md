@@ -96,6 +96,16 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
   (decided 2026-07-19: B, the docstring band — tinted band + left accent
   between header and controls, pencil on hover, dashed + chip when excluded;
   implemented on the pilot branch).
+- [measure-switch-proposals.html](./measure-switch-proposals.html) — the
+  measure switch block: one curated upstream control (pick the measure) feeding
+  a fully fixed chart, for locked CDEX views. Control type is derived, not
+  configured — segmented ≤4 choices / dropdown beyond / pills + free-y facets
+  when multiple; always emits the long measure+value shape so facet growth
+  never changes the schema; labels shown, raw names never; last pill refuses
+  to turn off (≥1 validated). D mocks the locked end state: the switch adopted
+  into its consumer panel's toolbar (needs dock support, follow-up). For BDS
+  data the same UI fronts a PARAM filter instead of a pivot. Proposed;
+  undecided.
 - [archive/gear-panel-proposals.html](./archive/gear-panel-proposals.html) —
   gear popover → full-width in-flow settings band (variant B, piloted in
   blockr.viz).
