@@ -1,4 +1,4 @@
-# Vendored from blockr.dplyr/R/js-block.R (0.3.x) and adapted:
+# Vendored from blockr.dplyr/R/js-block.R (0.2.0, commit 43d92f5) and adapted:
 #   - `new_js_plot_block()` targets blockr.core::new_plot_block() instead of
 #     new_transform_block() (same server signature: function(id, data)).
 #   - Shared JS/CSS assets load through blockr.dplyr's exported dependency
