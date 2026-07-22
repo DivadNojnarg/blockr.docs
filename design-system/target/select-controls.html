@@ -110,7 +110,7 @@
 <code>blockr_select_dep()</code>). Single and multi mode, searchable dropdown, label sublabels,
 removable + drag-reorderable tags. Every mock on this page uses the component's real classes.
 <strong>Decision 2026-07-22: this is the select everywhere</strong> — including two-choice pickers
-(measure switch); no shinyWidgets, no Bootstrap button groups, no bespoke pickers.</p>
+(the picker block); no shinyWidgets, no Bootstrap button groups, no bespoke pickers.</p>
 
 <h2>Single select</h2>
 <p>Closed shows the picked value with its label as a grey sublabel and a chevron. Open replaces the
@@ -236,7 +236,7 @@ carries the human name.</p>
 <div class="callout">
   <strong>Decision: blockr-select everywhere.</strong> Consistency beats per-count control types: no
   threshold cliff between 4 and 5 choices, one component to learn and maintain, and the multi mode's
-  tags replace any pill/checkbox-button group. The measure switch block (blockr.viz) is the
+  tags replace any pill/checkbox-button group. The picker block (blockr.viz, generalized from the measure switch) is the
   reference consumer: viewer control = single or multi <code>Blockr.Select</code>; its builder
   options (measures offered, allow multiple) sit in the gear settings band. The segmented/pill
   mocks in measure-switch-proposals.html are superseded as shipped UI and kept only as a possible
@@ -244,7 +244,7 @@ carries the human name.</p>
 </div>
 <p class="hint">Component CSS on this page is the verbatim blockr-select.css subset from the
 design-system inventory (§2); if the component changes, refresh both. Live usage: every
-blockr.dplyr block, blockr.viz measure switch.</p>
+blockr.dplyr block, blockr.viz picker block.</p>
 </main>
 </body>
 </html>
