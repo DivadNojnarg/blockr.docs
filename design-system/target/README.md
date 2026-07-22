@@ -96,6 +96,15 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
   (decided 2026-07-19: B, the docstring band — tinted band + left accent
   between header and controls, pencil on hover, dashed + chip when excluded;
   implemented on the pilot branch).
+- [select-controls.html](./select-controls.html) — the one select
+  (`Blockr.Select`, blockr.dplyr), displayed systematically: single / multi,
+  closed / placeholder / open, tags with remove + drag-reorder, option
+  anatomy (value primary, label sublabel — labelPrimary swap recorded as an
+  open question for clinician-facing pickers), when-to-use table (decided
+  2026-07-22: blockr-select everywhere, including 2-choice pickers; the
+  segmented/pill button pickers from measure-switch-proposals stay a
+  recorded future variant, not shipped UI). Mocks use the component's real
+  classes with the verbatim CSS subset.
 - [measure-switch-proposals.html](./measure-switch-proposals.html) — the
   measure switch block: one curated upstream control (pick the measure) feeding
   a fully fixed chart, for locked CDEX views. Control type is derived, not
@@ -104,8 +113,10 @@ Originally drafted on the `docs/design-system` branch of blockr.ui
   never changes the schema; labels shown, raw names never; last pill refuses
   to turn off (≥1 validated). D mocks the locked end state: the switch adopted
   into its consumer panel's toolbar (needs dock support, follow-up). For BDS
-  data the same UI fronts a PARAM filter instead of a pivot. Proposed;
-  undecided.
+  data the same UI fronts a PARAM filter instead of a pivot. Control style
+  (segmented/pills, variants A–C) superseded 2026-07-22 by select-controls
+  (blockr-select everywhere); the block/schema design and variant D remain
+  the record.
 - [archive/gear-panel-proposals.html](./archive/gear-panel-proposals.html) —
   gear popover → full-width in-flow settings band (variant B, piloted in
   blockr.viz).
