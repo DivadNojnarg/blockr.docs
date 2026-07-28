@@ -11,6 +11,11 @@
 
 `Blockr.Select` is transparent and unsized by default so it inherits the parent row's 30px slot; the `--bordered` modifier promotes it to the 42px standalone size.
 
+> The 26px gear is under discussion: blockr.viz already renders it at 30px so it
+> can share the block's top-right row with search and download controls. See the
+> unratified idea in [target/README.md](./target/README.md#idea-unratified-promote-the-gear-row-to-a-30px-block-header-control-row).
+> 26px remains canon until that is decided.
+
 ## Border radius
 
 Three tiers (the 6px tier is used by several block-internal sub-sections but is not yet formally documented in the master spec — see TODOs in `blockr.dplyr/dev/design-system.md`):

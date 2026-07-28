@@ -175,3 +175,64 @@ performance or correctness:
 - Given ~zero functional/perf payoff, is the churn (5 packages, re-verify the
   look everywhere) better spent folding straight into the blockr.ui migration
   rather than done twice?
+
+## Idea (unratified): promote the gear row to a 30px block header control row
+
+> Captured 2026-07-28 as a thought, **not a decision**. Nothing is being
+> changed off this note. The status quo below stays canon until it is ratified.
+
+Today the gear is specified as a lone 26px icon button in the block's top-right
+corner (`../spacing-and-sizing.md`, `../components/blockr-row.md:37`). The idea
+is to stop treating that corner as "where the gear lives" and treat it as a
+**control row**: a right-aligned strip of always-visible block chrome, sized at
+30px (`--blockr-control-h-sm`) so the gear sits flush with everything else that
+lands there.
+
+The motivation is capacity, not aesthetics. Once the row is a row, it can hold
+a search field, a download button, a small selector, and other controls that
+should stay visible rather than hide behind the gear. 26px is too short to
+share a line with those; 30px is the height they already use.
+
+This is not hypothetical: blockr.viz has effectively already done it. Its chart
+and table blocks moved search and download into the gear row, then bumped the
+gear to 30px so the cluster would line up
+(`blockr.viz/inst/css/chart.css:668`, `blockr.viz/inst/css/table.css:213`,
+commit 220b9b5). The commit reads as a local fix, but the pressure behind it is
+this design question.
+
+**Current drift, for whoever picks this up.** Measured 2026-07-28:
+
+| Size | Where |
+|---|---|
+| 26px (canon) | blockr.dplyr, blockr.ggplot, blockr.extra, blockr.admiral, blockr.seasonal, blockr.dm (`.jscf-gear-btn`), blockr.pharma (`.pp-gear-btn`) |
+| 30px | blockr.viz chart + table/rank (scoped, 3-deep, so it wins wherever both sheets load); blockr.outline panel (`--otl-ctrl-h`) |
+| 32px | blockr.io (`blockr.io/inst/assets/css/io-blocks.css:82`) |
+
+Two of those are separate defects regardless of which way this idea goes.
+blockr.io is at 32px, which matches nothing, and its comment claims it "matches
+blockr.dplyr". Worse, its selector is **unscoped** `.blockr-gear-btn`, so any
+board loading io's CSS after dplyr's restyles every block's gear in the app.
+That is the same failure mode as the blockr.outline leak
+(`blockr.outline` 0.0.71). Fix the scope whatever else happens.
+
+**Open questions to settle before doing it:**
+
+- The token. `--blockr-control-h-sm: 30px` is currently documented as "nested
+  in-row inputs, number inputs, add-row bar", and `--blockr-control-h-xs: 26px`
+  is the icon-button token. Adopting 30px means either redefining what the xs
+  tier is for or accepting that icon buttons in a header row use the sm tier
+  while icon buttons inside a row (remove, etc.) stay at 26px. The second is
+  probably right but needs stating, because it makes size context-dependent
+  rather than per-component.
+- Which icon buttons move. The gear is the obvious one. The in-row remove "x"
+  almost certainly should not: it belongs to a 30px row and would crowd it.
+- Blast radius. Seven packages currently render 26px gears. A bump is visible
+  on every block in the ecosystem, so it wants one coordinated pass plus a
+  visual re-check, not incremental drift.
+- Whether the row needs its own class. If it becomes a real container with
+  layout rules (gap, alignment, overflow when controls exceed the width), it is
+  a component, not a size change, and `.blockr-gear-header` is the wrong name
+  for it.
+- What happens in narrow blocks. Blocks resize down to ~300px. A row holding a
+  search field plus three buttons needs a defined collapse behaviour, and the
+  no-media-query rule (`../spacing-and-sizing.md`) applies.
