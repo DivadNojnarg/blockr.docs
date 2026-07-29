@@ -20,17 +20,20 @@ CSS variables, Tailwind-aligned greyscale plus a small semantic palette.
 | `--blockr-grey-300` | `#d1d5db` | dividers |
 | `--blockr-grey-400` | `#9ca3af` | placeholders, meta text |
 | `--blockr-grey-500` | `#6b7280` | labels, secondary text |
-| `--blockr-grey-600` | `#4b5563` | emphasised body text |
 | `--blockr-grey-700` | `#374151` | headings in muted context |
+| `--blockr-grey-900` | `#111827` | primary text |
 | `--blockr-color-text-primary` | `#111827` | main body text |
-| `--blockr-color-text-secondary` | `#6b7280` | de-emphasised text |
-| `--blockr-color-text-muted` | `#9ca3af` | meta / helper |
+| `--blockr-color-text-secondary` | `#374151` | de-emphasised text |
+| `--blockr-color-text-muted` | `#6b7280` | labels, descriptions |
+| `--blockr-color-text-subtle` | `#9ca3af` | placeholders, meta, muted icons |
 | `--blockr-color-border` | `#e5e7eb` | all borders |
 | `--blockr-color-bg-input` | `#f9fafb` | input / row backgrounds |
 | `--blockr-color-bg-hover` | `#f3f4f6` | hover background |
 | `--blockr-color-primary` | `#2563eb` | focus rings, active states |
-| `--blockr-color-danger` | `#dc3545` | destructive hover (row remove) |
-| `--blockr-color-error` | `#dc3545` | validation error text |
+| `--blockr-color-danger` | `#dc2626` | destructive hover (row remove) |
+| `--blockr-color-error` | `#dc2626` | validation error text |
+| `--blockr-color-warning` | `#f59e0b` | required-empty field border |
+| `--blockr-color-warning-bg` | `#fffbeb` | required-empty field background |
 | `--blockr-blue-50` | `#eff6ff` | tinted primary background |
 
 Always declare literal fallbacks so components render standalone: `color: var(--blockr-color-text-primary, #111827)`.
@@ -63,7 +66,7 @@ Weights: `500` (medium) for labels, `600` (semibold) for emphasised / confirmed 
 
 | Radius | Use |
 |---|---|
-| **8px** | inputs, rows, dropdowns, popovers |
+| **8px** | inputs, rows, dropdowns, settings bands |
 | **6px** | internal card sub-sections |
 | **4px** | pills, small buttons |
 
@@ -72,10 +75,10 @@ Weights: `500` (medium) for labels, `600` (semibold) for emphasised / confirmed 
 - Row padding: 5px vertical.
 - Flex gap between fields: 6–12px.
 - Dropdown shadow: `0 4px 12px rgba(0, 0, 0, 0.1)`.
-- Focus ring (all focusable elements):
+- Focus ring (all focusable elements, no exceptions):
   ```css
   border-color: var(--blockr-color-primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
   ```
 - Hover transitions: `0.15s ease`. No other motion.
 - Destructive controls (row remove): `opacity: 0` at rest, revealed on row hover, turn `--blockr-color-danger` on button hover.
@@ -97,7 +100,7 @@ Rules:
 
 ## Naming — BEM + short prefix
 
-**Shared primitives** use BEM with the `blockr-` prefix (reserved): `.blockr-select`, `.blockr-input`, `.blockr-row`, `.blockr-pill`, `.blockr-popover`, `.blockr-gear-btn`, `.blockr-add-row`. Elements use `__`, modifiers use `--`:
+**Shared primitives** use BEM with the `blockr-` prefix (reserved): `.blockr-select`, `.blockr-input`, `.blockr-row`, `.blockr-pill`, `.blockr-checkbox`, `.blockr-settings`, `.blockr-gear-btn`, `.blockr-add-row`. Elements use `__`, modifiers use `--`:
 
 ```
 .blockr-select
@@ -113,7 +116,9 @@ Rules:
 - `.blockr-select` — single or multi select, transparent by default (inherits a 30px row slot); add `--bordered` for the 42px standalone size. Options may carry a secondary `.blockr-select__opt-label` at grey-500 / 13px with 8px left margin (ellipsizes on overflow).
 - `.blockr-input` — code/expression input with autocomplete popup, monospace font, 42px standalone height.
 - `.blockr-row` — horizontal stack of fields (filter condition, mutate expression, etc.), 30px tall, grey-50 background, 8px radius, optional trailing remove button that appears on row hover.
-- `.blockr-pill` — 24px tall, 4px radius, small toggle or tag.
+- `.blockr-pill` — 24px tall, 4px radius, small toggle or tag. Only where the label *is* the value (AND/OR, asc/desc); `.blockr-pill--active` marks the current one.
+- `.blockr-checkbox` — plain on/off data option. 16px box, 4px radius, primary fill when checked, 13px label, 26px hit area, native `<input>` underneath. Use this, not a self-labelling on/off pill.
+- `.blockr-settings` — the block's settings band. Full-width, **in flow** (no absolute positioning, no portal, no z-index), opens between the gear header and the block content and pushes the content down. `flex-wrap` container, fields at `flex: 1 1 190px; min-width: 0`. There is no floating settings popover — do not generate one.
 - `.blockr-add-row` — full-width 30px ghost button under a list of rows (`+ Add …`).
 
 ## Overall feel
@@ -127,4 +132,5 @@ Dense, quiet, editor-like. No drop shadows except the dropdown one above. No gra
 - Do not introduce new color values outside this palette.
 - Do not use media / container queries inside a block.
 - Do not hardcode a UI font family. Do hardcode the mono stack for code fields.
+- Do not put form controls in a floating panel. Settings open in flow, as a band.
 - Do not use emojis in UI copy.

@@ -176,21 +176,41 @@ would have helped goes unread.
 
 ## Boolean controls
 
-- **Values → cycling pill.** The label *is* the value and both states are
-  equally valid choices: `AND`/`OR`, `asc`/`desc`, `n`/`%`, comparison
-  operators, join types.
-- **Data options → checkbox.** A self-labeling on/off toggle is ambiguous — when
-  a pill reads `include`, the user cannot tell whether that is the current state
-  or the action a click performs. A checkbox shows state and action separately.
+- **Values → cycling pill** (`.blockr-pill`). The label *is* the value and both
+  states are equally valid choices: `AND`/`OR`, `asc`/`desc`, `n`/`%`,
+  comparison operators, join types.
+- **Data options → checkbox** (`.blockr-checkbox`). A self-labeling on/off
+  toggle is ambiguous — when a pill reads `include`, the user cannot tell
+  whether that is the current state or the action a click performs. A checkbox
+  shows state and action separately. 16px box, `--blockr-radius-sm`, primary
+  fill when checked, 13px label, 26px hit area, native `<input>` underneath.
 - **UI modes → switch** (reserved; ships when a real use case lands).
+
+Where a pill *is* right, label the meaning, not the mechanism. A click-through
+pill cycles options in place, so its text states what the current setting
+means, never a bare `On` / `Off`: `Search bar` / `No search bar`, `Sortable` /
+`Not sortable`. The row label names the dimension; the pill names the chosen
+state.
 
 ## Text commit
 
 Text and number fields commit on **Enter or blur**, never per keystroke. While
 the typed value differs from the committed one, an `Enter ↵` chip is armed
 inside the field's right edge; committing fades it to a ✓, typing re-arms it,
-and Escape reverts. The chip always spells `Enter` — a bare glyph is not
-self-evident. Per-keystroke updates survive only where the input *is* a live
-filter (a table's quick-search box).
+and Escape reverts. Per-keystroke updates survive only where the input *is* a
+live filter (a table's quick-search box).
 
-See `target/design-system.html` §5.5 for the keystroke-label rules.
+## Keystroke labels — one glyph, one rule
+
+| Rule | Detail |
+|---|---|
+| **The Enter glyph is `↵`** (U+21B5) | The most widely used software glyph, and it renders reliably across fonts. Rejected: `⏎` (U+23CE, the ISO keycap symbol — rendering varies badly by typeface) and `↩` (U+21A9, Apple-specific Return; Apple even distinguishes Return `↩` from Enter `⌅`, a distinction our users don't need). |
+| **In controls: verb + muted glyph. Compact: glyph only** | Room available → `Enter ↵` / `Run ↵`, glyph at ~55% opacity and 0.95em. Tight inline contexts → a bare `↵` chip. Never smaller than the 26px hit area. |
+| **Confirm chips cycle: armed → ✓** | Dirty value → the chip shows the keystroke, primary-tinted and clickable. Committing by key or click → the chip's content is *replaced* by the ✓ icon, faded. The keystroke hint disappears because there is nothing left to do. Typing re-arms it. |
+| **Always spell it in the tooltip** | The glyph alone is not self-evident to every user. Every glyph carries a `title` with the shortcut spelled out — that is what licenses the compact form. |
+| **Modifiers: spell, don't symbol** | A web app cannot assume the OS. Static text uses the dual form `⌘/Ctrl + Enter`. JS-rendered labels may platform-switch. Bare macOS symbol strings (`⇧⌘K`) only when platform-detected, never as static text. |
+| **In prose and docs: `<kbd>`** | Spelled key names, `+` separators: press <kbd>Shift</kbd>+<kbd>Enter</kbd>. |
+
+The chip always spells `Enter` where space allows precisely because of rule
+four — a bare glyph degrades to the compact form only once the tooltip is
+carrying the spelled version.

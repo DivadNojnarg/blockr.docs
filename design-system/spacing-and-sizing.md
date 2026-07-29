@@ -1,37 +1,46 @@
 # Spacing and sizing
 
-## Heights
+## Control heights
 
-| Height | Use |
-|---|---|
-| **42px** | standalone inputs, bordered selects — the universal "input" height |
-| **30px** | nested inputs inside rows, number inputs, add-row bar |
-| **26px** | icon buttons (gear, remove) |
-| **24px** | pill toggles, confirm buttons |
+Three tiers, and controls of the same tier line up on a row.
 
-`Blockr.Select` is transparent and unsized by default so it inherits the parent row's 30px slot; the `--bordered` modifier promotes it to the 42px standalone size.
+| Token | Height | Use |
+|---|---|---|
+| `--blockr-control-h` | **42px** | standalone inputs, bordered selects — the universal "input" height |
+| `--blockr-control-h-sm` | **30px** | nested inputs inside rows, number inputs, add-row bar |
+| `--blockr-control-h-xs` | **26px** | icon buttons (gear, remove), pill toggles, confirm buttons |
 
-> The 26px gear is under discussion: blockr.viz already renders it at 30px so it
-> can share the block's top-right row with search and download controls. See the
-> unratified idea in [target/README.md](./target/README.md#idea-unratified-promote-the-gear-row-to-a-30px-block-header-control-row).
-> 26px remains canon until that is decided.
+`Blockr.Select` is transparent and unsized by default so it inherits the parent
+row's 30px slot; the `--bordered` modifier promotes it to the 42px standalone
+size.
+
+There is no popover tier. Settings used to open in a floating popover with its
+own 38px control height; that popover is gone, replaced by the in-flow settings
+band, which uses the standard tiers like everything else. See
+[components/blockr-settings.md](./components/blockr-settings.md).
+
+> **Known drift.** The 26px gear is canon, but blockr.viz renders it at 30px so
+> it can share the block's top-right corner with search and download, and
+> blockr.io at 32px through an unscoped selector that leaks onto every block in
+> the app. Whether that corner should become a proper 30px control row is an
+> open question, tracked in the `blockr.design` repo under
+> `open/blockr.ui/open-questions.md`. **26px remains canon until it is decided
+> — do not bump a gear to match a neighbour.**
 
 ## Border radius
 
-Three tiers (the 6px tier is used by several block-internal sub-sections but is not yet formally documented in the master spec — see TODOs in `blockr.dplyr/dev/design-system.md`):
-
-| Radius | Use |
-|---|---|
-| **8px** | inputs, rows, dropdowns, popovers |
-| **6px** | internal card sub-sections (separate, bind-rows, pivot-longer, unite) |
-| **4px** | pills, small buttons |
+| Token | Radius | Use |
+|---|---|---|
+| `--blockr-radius-lg` | **8px** | inputs, rows, dropdowns, settings bands |
+| `--blockr-radius-md` | **6px** | internal card sub-sections (separate, bind-rows, pivot-longer, unite) |
+| `--blockr-radius-sm` | **4px** | pills, small buttons |
 
 ## Gaps and padding
 
 - Row padding: 5px vertical, flex gap 6–12px between fields.
-- Dropdown shadow: `0 4px 12px rgba(0, 0, 0, 0.1)`.
-- Focus ring: `box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1)` (see [colors.md](./colors.md)).
-- Hover transitions: `0.15s ease`.
+- Dropdown shadow: `--blockr-shadow-dropdown` (`0 4px 12px rgba(0, 0, 0, 0.1)`).
+- Focus ring: `--blockr-focus-ring` — one ring for everything focusable, see [colors.md](./colors.md).
+- Hover transitions: `--blockr-transition` (`0.15s ease`). No other motion.
 
 ## Responsive layout (flex-wrap, not media queries)
 

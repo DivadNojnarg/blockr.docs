@@ -7,9 +7,17 @@ Block UI inherits the page font; components never hardcode `font-family` on cont
 | Context | Stack |
 |---|---|
 | All UI text | inherited from page |
-| Code input fields, code completion items | `'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace` |
+| Code input fields, code completion items | `--blockr-font-mono` |
 
-The mono stack is currently hardcoded in four places in `blockr-input.css`. Extracting to a `--blockr-font-mono` variable is tracked as a TODO in `blockr.dplyr/dev/design-system.md`.
+```css
+--blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+```
+
+The mono stack is the one font family blockr does hardcode, because code has to
+be monospaced whatever the page font is. It is currently repeated literally in
+four places in `blockr-input.css`; the token lands with the token layer, so
+write `var(--blockr-font-mono, 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace)`
+in new code.
 
 ## Sizes
 

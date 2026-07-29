@@ -73,7 +73,7 @@ Used by `blockr.dplyr` column pickers (ADaM-style `attr(col, "label")`) and reus
 
 ## Dropdown positioning
 
-Dropdowns use the portal pattern — appended to `<body>` with `position: fixed` to escape ancestor stacking contexts (Dockview panels, `contain: paint`, `overflow: hidden` wrappers). Driven by `blockr.design/open/blockr-select-portal/3-design.md` after the Dockview stacking saga (see `blockr.design/done/blockr.dplyr-picker-modernization/dockview-stacking-analysis.md`).
+Dropdowns use the portal pattern — appended to `<body>` with `position: fixed` to escape ancestor stacking contexts (Dockview panels, `contain: paint`, `overflow: hidden` wrappers). This is the one place blockr accepts a `<body>` portal, and it is why: a dropdown must escape its panel, whereas a settings band must not (see [blockr-settings.md](./blockr-settings.md)).
 
 ## Keyboard navigation
 

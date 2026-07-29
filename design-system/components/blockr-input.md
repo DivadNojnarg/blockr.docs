@@ -82,7 +82,7 @@ Font: `'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace` at 14px. Popup f
 
 ## Syntax highlighting (V2, opt-in)
 
-Transparent-text mirror technique: the `<input>` has `color: transparent` with a visible `caret-color`, and a `<div class="blockr-input__mirror">` behind it renders the same text as coloured `<span>` tokens. Enable via `highlight: true` in the config. Tokenizer covers `string`, `number`, `operator`, `paren`, `known-func`, `column`, `keyword`, `text`. See `blockr.dplyr/dev/blockr-input-spec.md` for tokenizer details and the mirror CSS contract (font metrics must match exactly, or tokens drift from the caret).
+Transparent-text mirror technique: the `<input>` has `color: transparent` with a visible `caret-color`, and a `<div class="blockr-input__mirror">` behind it renders the same text as coloured `<span>` tokens. Enable via `highlight: true` in the config. Tokenizer covers `string`, `number`, `operator`, `paren`, `known-func`, `column`, `keyword`, `text`. The mirror carries a hard contract: **font metrics must match the input exactly**, or the coloured tokens drift away from the caret. Any change to the input's font, size, letter-spacing or padding has to be mirrored on `.blockr-input__mirror`.
 
 ## Migration from ACE
 

@@ -26,24 +26,40 @@ Rows typically have a fixed-width left column (150–160px) for the "key" (colum
 
 ## Pills
 
-`.blockr-pill` is the 24px toggle/button used for e.g. op selectors (AND/OR, ascending/descending). 4px radius, small padding, hover lightens the background; the `.blockr-popover-toggle-active` modifier marks the current selection.
+`.blockr-pill` is the small toggle/button used for op selectors (AND/OR,
+ascending/descending). `--blockr-radius-sm`, small padding, hover lightens the
+background; `.blockr-pill--active` marks the current selection — one shared
+modifier, not a per-block re-implementation. Pills currently ship at 24px and
+fold into the 26px `--blockr-control-h-xs` tier with the token layer.
+
+**A pill is only correct when the label *is* the value.** A self-labelling
+on/off pill is ambiguous: when a pill reads `include`, the user cannot tell
+whether that is the current state or the action a click performs. Plain data
+options are `.blockr-checkbox` instead — see
+[ux-principles.md](../ux-principles.md#boolean-controls).
 
 **Label the meaning, not the mechanism.** A click-through pill cycles options in place, so its text must state what the *current setting means* — never a bare `On` / `Off`. Like `AND` / `OR` and `Ascending` / `Descending`, a binary feature toggle reads `Search bar` / `No search bar`, `Sortable` / `Not sortable`, `Collapsible` / `Not collapsible`. The row label names the dimension; the pill names the chosen state. `On`/`Off` forces the reader to remember which feature the row controls and which direction is which — the descriptive label is self-evident at a glance.
 
-## Gear / popover
+## Gear header
 
 ```
 .blockr-gear-header  — flex container, justify-content: flex-end
 .blockr-gear-btn     — 26px square icon button
-.blockr-gear-active  — state when the popover is open (primary color + tinted bg)
-.blockr-popover      — absolute-positioned panel, 8px radius, shadow
-.blockr-popover-row, .blockr-popover-label, .blockr-popover-input,
-.blockr-popover-select-wrap, .blockr-popover-toggle — popover internals
+.blockr-gear-active  — state while the settings band is open (primary + tinted bg)
 ```
 
-The popover wraps nested `Blockr.Select` instances in `.blockr-popover-select-wrap`, which overrides the transparent control to a bordered 38px control height inside the popover context. Focus/open states on the wrapped control still use the standard focus ring.
+The gear toggles `.blockr-settings`, the full-width band that opens in flow
+directly below this header. **No gear when there is nothing to configure** —
+hide the button rather than opening an empty band.
 
-For **what belongs in the popover and how its rows are laid out** (label on top, full-width control, muted help below), see [blockr-popover.md](./blockr-popover.md). That doc is the spec; this section is just the class list.
+For what belongs in the band and how its fields are laid out, see
+[blockr-settings.md](./blockr-settings.md). That doc is the spec; this section
+is just the class list.
+
+The legacy `.blockr-popover-*` classes still exist in blockr.dplyr's stylesheet
+and are still referenced by bands that have not been rebuilt yet — the band
+scopes them back up to the standard 42px control height. Do not reach for them
+in new code.
 
 ## Confirm button
 
