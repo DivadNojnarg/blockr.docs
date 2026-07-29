@@ -22,10 +22,10 @@ band, which uses the standard tiers like everything else. See
 > **Known drift.** The 26px gear is canon, but blockr.viz renders it at 30px so
 > it can share the block's top-right corner with search and download, and
 > blockr.io at 32px through an unscoped selector that leaks onto every block in
-> the app. Whether that corner should become a proper 30px control row is an
-> open question, tracked in the `blockr.design` repo under
-> `open/blockr.ui/open-questions.md`. **26px remains canon until it is decided
-> — do not bump a gear to match a neighbour.**
+> the app. Whether that corner should become a proper 30px control row — one
+> that could hold search and download beside the gear — is an open question.
+> **26px remains canon until it is decided; do not bump a gear to match a
+> neighbour.**
 
 ## Border radius
 

@@ -6,7 +6,7 @@ block-building patterns, starter packages, decision records.
 If something would still be true six months from now after the code has moved,
 it belongs here. Otherwise:
 
-- **Specs for in-progress work** → the `blockr.design` repo.
+- **Specs for in-progress work** → the workspace's specs repo, not here.
 - **Notes tied to a package's current code state** → that package's `dev/`
   folder.
 

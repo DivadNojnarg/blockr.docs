@@ -14,7 +14,7 @@ Restart Claude Code (or wait for skill auto-discovery). To uninstall, delete the
 
 | Skill | When to use |
 |---|---|
-| [blockr-spec](./blockr-spec/) | Writing or continuing a design spec under `blockr.design/`. Enforces the four-phase flow (motivation → requirements → design → implementation). |
+| [blockr-spec](./blockr-spec/) | Writing or continuing a design spec. Enforces the four-phase flow (motivation → requirements → design → implementation) and stops you jumping ahead. |
 | [blockr-block](./blockr-block/) | Adding a new block to a blockr package. Walks through the R-driven vs JS-driven choice, starts new packages from the [scaffolds](../../scaffolds/), writes the matching tests, hands off to Playwright for verification. |
 
 ## Browser verification

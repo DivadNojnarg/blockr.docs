@@ -56,8 +56,8 @@ still make sense six months from now after the code has moved, it belongs here.
 What does *not*:
 
 - **Specs for planned or in-progress work** — those are temporal by nature and
-  live in the `blockr.design` repo, one folder per topic, following motivation
-  → requirements → design → implementation.
+  live in a separate specs repo, one folder per topic, following motivation →
+  requirements → design → implementation.
 - **Notes tied to a package's current code state** — those stay in that
   package's `dev/` folder.
 

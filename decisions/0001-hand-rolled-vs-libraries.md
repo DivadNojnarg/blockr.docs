@@ -11,7 +11,7 @@ superseded-by: none
 
 ## Context
 
-blockr's production UI components (`Blockr.Select` dropdown, `Blockr.Input` code editor) are hand-rolled vanilla JS rather than built on external libraries like Tom Select, Choices.js, or CodeMirror. The original reasoning in `blockr.design/open/blockr.dplyr-rewrite/1-motivation.md` was: LLMs make it cheap to write good JS, so owning the DOM beats fighting a library's conventions.
+blockr's production UI components (`Blockr.Select` dropdown, `Blockr.Input` code editor) are hand-rolled vanilla JS rather than built on external libraries like Tom Select, Choices.js, or CodeMirror. The original reasoning was: LLMs make it cheap to write good JS, so owning the DOM beats fighting a library's conventions.
 
 After shipping the JS-driven rewrite + the `blockr.dplyr-picker-modernization` spec (label forwarding across all picker blocks), the empirical record supports that reasoning:
 
@@ -94,11 +94,23 @@ Unification-first, swap-later is the path this ADR endorses.
 | React Select | MIT | ~55 KB | React-only | Same issue. |
 | Floating UI | MIT | ~15 KB | Partial | Positioning only; doesn't provide the select UI itself. Could pair with a bare `<select>` + custom UI, but we lose search/multi/reorder. |
 
-## Related
+## The one saga that tested this decision
 
-- `blockr.design/open/blockr.dplyr-rewrite/` — original rewrite rationale ("JS is cheap in the LLM era").
-- `blockr.design/done/blockr.dplyr-picker-modernization/dockview-stacking-analysis.md` — the one saga that tested this decision.
-- `blockr.design/open/blockr-select-portal/` — the portal refactor that closed the stacking gap.
+Worth recording, because it is the closest this ADR has come to being wrong.
+
+`Blockr.Select`'s dropdown was clipped and mis-stacked inside Dockview panels —
+the kind of multi-day edge case where a mainstream library has already absorbed
+the pain, and exactly the trigger listed at (7) above. The fix was the portal
+pattern: append the dropdown to `<body>` with `position: fixed` so it escapes
+every ancestor stacking context (`contain: paint`, `overflow: hidden`, the
+panel's own transform).
+
+Two things make it a data point *for* the decision rather than against it.
+The fix was small once diagnosed, and it is the same fix Tom Select and every
+other library applies — so swapping would have bought the same behaviour, not a
+better one. But the diagnosis cost real days, which is why "a multi-day edge
+case of this shape" stays on the revisit list. One more of these and the math
+changes.
 
 ## Supporting artifact
 

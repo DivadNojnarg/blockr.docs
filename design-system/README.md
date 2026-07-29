@@ -29,8 +29,8 @@ byte-identical by convention; if you edit one, edit all of them.
 
 **The direction is settled: blockr.ui owns the shared layer.** Everything below
 is written against that end state, because the rules do not change when the
-files move. What is still open is sequencing, tracked as a spec in the
-`blockr.design` repo under `open/blockr.ui/`.
+files move. What is still open is sequencing, which is tracked as a spec rather
+than here.
 
 ## The token contract
 

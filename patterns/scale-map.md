@@ -4,8 +4,7 @@ Study-wide discrete scales ("PD is dark red in every view") carried as the
 `"scale_map"` board option. Mechanism lives in **blockr.theme** (the single
 home — no vendored copies); renderers consume it via `Suggests:
 blockr.theme` behind a `requireNamespace()` guard and fall back to their
-standard colors when the package is absent. Spec:
-`blockr.design/open/blockr.theme/`.
+standard colors when the package is absent.
 
 ## The contract
 
