@@ -110,12 +110,17 @@ Once tests pass, verify the block runs end-to-end in a browser. **The verificati
 
 Do **not** verify by serving the block standalone (`serve(new_<name>_block())` or `serve(new_<name>_block(), list(data = ...))`). That only proves the UI renders in isolation; it exercises no links, no upstream data, and no state round-trip, so it hides exactly the bugs verification is meant to catch (broken link `input`s, state-name mismatches). Use it at most as a throwaway smoke test, never as the thing you hand back.
 
-Once `app.R` is written and launched, hand off to the **`blockr-playwright`** skill to drive the running app:
+Once `app.R` is written and launched, drive the running app with whatever
+browser-automation skill is installed — a Playwright MCP setup, the
+`shiny-chromote-inspect` skill, or `{chromote}` directly. See
+`blockr.docs/agents/skills/README.md`.
 
 - Screenshot the block in its empty state and after a typical interaction.
 - Check: UI renders without console errors, the block produces output downstream, the empty → configured transition is clean.
 
-> **`blockr-playwright` is not in this repo.** It ships from `cynkra/blockr.dev` at [`.claude/skills/blockr-playwright`](https://github.com/cynkra/blockr.dev/tree/align-workflow/.claude/skills/blockr-playwright) (end-to-end debugging of blockr Shiny apps via the Playwright MCP). Install it per `blockr.docs/agents/skills/README.md`. If it isn't installed, drive the running `app.R` manually with the `shiny-chromote-inspect` skill or `{chromote}` instead — but still verify against the board demo, not a standalone serve.
+> Verify against the **board demo**, never a standalone serve of the block on
+> its own. A block that works in isolation and breaks in a board is the common
+> failure, and only the board catches it.
 
 Tests passing isn't the same as the block working in a real Shiny session. Don't skip this step.
 

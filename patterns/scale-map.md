@@ -51,8 +51,9 @@ colors; only complete assignments, since `scale_*_manual()` errors on
 gaps), `blockr.pharma/R/viz-ae-gantt.R` + `viz-patient-overview.R` (the
 patient-profile block resolves the AESEV binding once and injects it as
 `settings$sev_colors` into both vizs, so they cannot disagree).
-Cross-renderer demo:
-`blockr.theme/dev/scale-map-demo.R` (echarts + ggplot, hex-identical).
+The cross-renderer guarantee is the point: the same scale map drives echarts
+and ggplot to hex-identical colors, so a level does not change appearance when
+a view switches renderer.
 
 ## Authoring (template/study side)
 

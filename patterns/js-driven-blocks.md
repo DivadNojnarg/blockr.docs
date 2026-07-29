@@ -188,14 +188,17 @@ Config and handle types — including the `setOptions` (reconciles selection) vs
 | `.blockr-select--bordered` | Add to standalone Blockr.Select for 42px bordered style |
 | `.blockr-gear-header` | Top-right gear icon container |
 | `.blockr-gear-btn` | Gear settings button |
-| `.blockr-popover` | Settings popover panel |
-| `.blockr-popover-row/label/input/checkbox` | Popover content elements |
+| `.blockr-settings` | Settings band — in flow under the gear header, not a floating panel |
+| `.blockr-settings__field` / `--full` | One field in the band's wrapping grid |
+| `.blockr-checkbox` | Plain on/off data option (not a self-labelling pill) |
 
 Row divider principle: the first "key" input in a row gets `border-right`; text separators (`=`, `→`, `of`) go between value-side elements.
 
 ## Performance checklist
 
-Lessons blockr.dplyr paid for (see `dev/perf-comparison-2026-04-18.md` there: eager metadata made a 50K-row board 5.6× slower to start; JSON serialization, not R compute, was the cost):
+Lessons blockr.dplyr paid for. The measurement behind them: eager metadata made
+a 50K-row board 5.6× slower to start, and the cost was JSON serialization, not R
+compute.
 
 - **Send light metadata eagerly, values lazily.** On data change push names/types/labels only; fetch a column's unique values on dropdown-open via a request message (`filter-column-values` + `setLoading`/`onOpen` on `Blockr.Select`).
 - **Cap what you render** (`maxRendered`, default 200) — and cap what you *send*: above a distinct-count threshold (`blockr.dplyr.max_filter_values`, default 1000) switch to server-side search. The server returns a capped page plus `total` and a sticky `truncated` flag; `Blockr.Select` enters search mode via `setSearchInfo()` and re-queries through its `onSearch` hook as the user types. Old servers that never send `truncated` keep the pure client-side behavior — the modes are wire-compatible. See `build_column_values(limit =, query =)` and the filter block's `_search_values` input for the reference wiring.

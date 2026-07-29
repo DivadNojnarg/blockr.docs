@@ -1,34 +1,77 @@
 # blockr.docs
 
-Shared developer documentation for the blockr ecosystem: design system, patterns, architectural decisions, testing, infra.
+How blockr is put together, and how to build with it. Shared developer
+documentation for the whole ecosystem: design system, block-building patterns,
+starter packages, architectural decisions.
 
-**Agents / LLMs: see [AGENTS.md](./AGENTS.md) first.**
+For what blockr *is* and how to use it, start at
+[blockr.site](https://blockr-org.github.io/blockr.site/). This repo is for
+people writing blockr code.
 
-## What belongs here
+**Agents / LLMs: read [AGENTS.md](./AGENTS.md) first.**
 
-Durable reference material that stays true across refactors. If a doc would still make sense six months from now after the code has moved, it belongs here.
+## Start here
 
-What does *not* belong:
+| If you want to… | Go to |
+|---|---|
+| Write your first block | [patterns/README.md](./patterns/README.md) — pick R-driven or JS-driven, then follow that guide |
+| Start a whole new block package | [scaffolds/](./scaffolds/) — copy `rblock/` or `jsblock/`, rename, morph. Both open with tests green |
+| Style a control so it looks native | [design-system/](./design-system/) — tokens, components, and the behavioural rules |
+| Know how a control should *behave* | [design-system/ux-principles.md](./design-system/ux-principles.md) — defaults, required-empty cues, what each label and hint is allowed to say |
+| Generate UI with an LLM | [design-system/design-system-prompt.md](./design-system/design-system-prompt.md) — the whole system as one paste-ready brief |
+| Understand why something is built the way it is | [decisions/](./decisions/) |
+| Install the Claude Code skills | [agents/skills/README.md](./agents/skills/README.md) |
 
-- **Temporal specs** for planned or in-progress work → `blockr.design/open|done|abandoned/<topic>/` (motivation → requirements → design → implementation).
-- **Package-specific notes** tied to current code state → stay in the package's `dev/` folder.
+## The shape of the ecosystem
+
+blockr is a Shiny dashboard toolkit. A **block** is a small self-contained
+unit of UI plus logic (filter, mutate, plot); blocks compose into a **board**,
+a DAG where each block's output feeds the next. Packages layer:
+
+```
+blockr.core     data model — board / block / link / stack, reactivity,
+                serialization, the block registry. No CSS.
+blockr.ui       presentation — design tokens, block card, app shell, sidebar
+blockr.dock     docking — the DockView workspace, views, layouts
+blockr.theme    data colour — chart palettes, ramps, scale maps
+blockr.{dplyr, viz, ggplot, io, dm, …}   the blocks themselves
+```
+
+Two things follow from that layering, and most of this repo is downstream of
+them:
+
+- **A block owns its own UI.** There is no framework rendering your controls
+  for you, which is why the [design system](./design-system/) is written down
+  rather than enforced by a component library.
+- **A block returns an expression, not a result.** Blocks build code; the board
+  evaluates it. That is what makes a board serializable and exportable to a
+  script, and it shapes how blocks are written and tested — see
+  [patterns/](./patterns/).
+
+## What belongs in this repo
+
+Durable reference material that stays true across refactors. If a doc would
+still make sense six months from now after the code has moved, it belongs here.
+
+What does *not*:
+
+- **Specs for planned or in-progress work** — those are temporal by nature and
+  live in the `blockr.design` repo, one folder per topic, following motivation
+  → requirements → design → implementation.
+- **Notes tied to a package's current code state** — those stay in that
+  package's `dev/` folder.
+
+The test is whether the doc describes a *decision* or a *situation*. Decisions
+last; situations get fixed and the doc rots.
 
 ## Layout
 
 ```
-decisions/       — Architecture decision records (ADRs). Numbered, dated, immutable.
-patterns/        — "How we build X" guides: JS-driven blocks, column metadata forwarding, etc.
-scaffolds/       — Copy-and-rename starter block packages (rblock, jsblock), tests green.
-design-system/   — Colors, typography, spacing, shared component specs (select, input, …).
-testing/         — testthat patterns, Playwright e2e, devtools::check workflows.
-infra/           — Dev container, git mount caveats, port forwarding notes.
-ecosystem/       — Package dependency map, release ordering, who owns what.
-agents/          — Prompt engineering notes, skill docs, agent-authored guides.
+patterns/        "How we build X": R-driven vs JS-driven blocks, scale maps.
+scaffolds/       Copy-and-rename starter block packages, tests green.
+design-system/   Tokens, components, UX principles, the LLM brief.
+decisions/       Architecture decision records. Numbered, dated, immutable.
+agents/          Claude Code skills and prompt notes.
 ```
 
 Each folder has a `README.md` indexing its contents.
-
-## Quick links
-
-- [Decisions index](./decisions/README.md) — all ADRs in chronological order.
-- [Agent primer](./AGENTS.md) — how AI tooling should operate in this repo.
