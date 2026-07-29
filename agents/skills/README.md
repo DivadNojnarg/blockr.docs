@@ -1,6 +1,7 @@
 # Skills
 
-A collection of optional Claude Code skills for the blockr ecosystem. Each is self-contained — install only what you want.
+Optional Claude Code skills for building with blockr. Each is self-contained —
+install only what you want.
 
 ## Install
 
@@ -8,14 +9,17 @@ A collection of optional Claude Code skills for the blockr ecosystem. Each is se
 cp -r blockr.docs/agents/skills/<name> ~/.claude/skills/
 ```
 
-Restart Claude Code (or wait for skill auto-discovery). To uninstall, delete the folder under `~/.claude/skills/`.
+Restart Claude Code (or wait for skill auto-discovery). To uninstall, delete the
+folder under `~/.claude/skills/`.
 
 ## Available
 
 | Skill | When to use |
 |---|---|
-| [blockr-spec](./blockr-spec/) | Writing or continuing a design spec. Enforces the four-phase flow (motivation → requirements → design → implementation) and stops you jumping ahead. |
-| [blockr-block](./blockr-block/) | Adding a new block to a blockr package. Walks through the R-driven vs JS-driven choice, starts new packages from the [scaffolds](../../scaffolds/), writes the matching tests, hands off to Playwright for verification. |
+| [blockr-block](./blockr-block/) | Adding a new block to a blockr package. Walks through the R-driven vs JS-driven choice, starts new packages from the [scaffolds](../../scaffolds/), writes the matching tests, and verifies the result in a real board. |
+
+Skills that automate a team's internal process rather than the act of building
+a block don't belong here — they travel with whatever repo owns that process.
 
 ## Browser verification
 
