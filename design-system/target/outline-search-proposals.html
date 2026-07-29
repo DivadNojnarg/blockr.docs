@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outline search — one box over the whole board</title>
+<style>
+  /* ---- tokens (target set, see design-system.html) ---- */
+  :root {
+    --blockr-grey-50: #f9fafb; --blockr-grey-100: #f3f4f6; --blockr-grey-200: #e5e7eb;
+    --blockr-grey-300: #d1d5db; --blockr-grey-400: #9ca3af; --blockr-grey-500: #6b7280;
+    --blockr-grey-700: #374151; --blockr-grey-900: #111827;
+    --blockr-blue-50: #eff6ff; --blockr-blue-100: #dbeafe; --blockr-blue-400: #60a5fa;
+    --blockr-blue-600: #2563eb;
+    --blockr-green-50: #ecfdf5; --blockr-green-600: #059669; --blockr-green-700: #047857;
+    --blockr-font-size-base: 0.875rem; --blockr-font-size-sm: 0.8125rem;
+    --blockr-font-size-xs: 0.75rem;
+    --blockr-font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+    --blockr-color-border: var(--blockr-grey-200);
+    --blockr-color-primary: var(--blockr-blue-600);
+    --blockr-radius-lg: 8px; --blockr-radius-md: 6px; --blockr-radius-sm: 4px;
+    --stack-prep: #2563eb; --stack-out: #d97706;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: var(--blockr-font-size-base); color: var(--blockr-grey-900);
+         background: #fff; line-height: 1.55; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 40px 160px; }
+  h1 { font-size: 1.6rem; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; font-weight: 600; margin: 52px 0 10px; padding-top: 22px;
+       border-top: 1px solid var(--blockr-color-border); }
+  h3 { font-size: 1rem; font-weight: 600; margin: 26px 0 6px; }
+  p, li { color: var(--blockr-grey-700); }
+  code { font-family: var(--blockr-font-mono); font-size: 0.8em; background: var(--blockr-grey-100);
+         border-radius: var(--blockr-radius-sm); padding: 1px 5px; }
+  .lede { font-size: 1rem; color: var(--blockr-grey-500); margin-top: 0; }
+  .hint { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400); }
+  .tag { display: inline-block; font-size: var(--blockr-font-size-xs); font-weight: 500;
+         border-radius: 999px; padding: 1px 9px; vertical-align: 2px; }
+  .tag-rec { background: #dcfce7; color: #166534; }
+  .tag-alt { background: #fef3c7; color: #92400e; }
+  .tag-old { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .callout { border-left: 3px solid var(--blockr-color-primary); background: var(--blockr-blue-50);
+             padding: 10px 16px; border-radius: 0 var(--blockr-radius-md) var(--blockr-radius-md) 0;
+             margin: 16px 0; }
+  .stage { border: 1px dashed var(--blockr-grey-300); border-radius: var(--blockr-radius-lg);
+           padding: 18px 22px 26px; margin: 14px 0; background: var(--blockr-grey-50); }
+  .stage-label { font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+                 text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0;
+          font-size: var(--blockr-font-size-sm); }
+  th { text-align: left; font-weight: 500; color: var(--blockr-grey-500);
+       border-bottom: 1px solid var(--blockr-color-border); padding: 6px 12px 6px 0;
+       font-size: var(--blockr-font-size-xs); text-transform: uppercase; letter-spacing: 0.04em; }
+  td { border-bottom: 1px solid var(--blockr-grey-100); padding: 8px 12px 8px 0;
+       vertical-align: top; }
+
+  /* ---- the dock panel the outline lives in ---------------------------- */
+  .panel { width: 420px; background: #fff; border: 1px solid var(--blockr-color-border);
+           border-radius: var(--blockr-radius-lg); padding: 14px 16px 18px;
+           box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08); position: relative; }
+  .panel--wide { width: 620px; }
+  .panel-title { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em;
+                 margin: 2px 0 10px; }
+  .panel-rule { border: 0; border-top: 1px solid var(--blockr-grey-100); margin: 0 0 6px; }
+
+  /* the document rows behind the search (grid: gutter + section) */
+  .doc { display: grid; grid-template-columns: 150px 1fr; column-gap: 14px; margin-top: 6px; }
+  .d-gut { position: relative; padding: 3px 0; }
+  .d-gut::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+                   background: var(--accent, var(--stack-prep)); opacity: 0.35; border-radius: 2px; }
+  .chip { display: flex; align-items: center; gap: 6px; margin-left: 10px; padding: 4px 6px;
+          border-radius: var(--blockr-radius-md); border: 1px solid transparent; }
+  .tile { width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; display: flex;
+          align-items: center; justify-content: center; font-size: 11px; font-weight: 600;
+          background: var(--blockr-grey-100); border: 1px solid var(--blockr-grey-200);
+          color: var(--blockr-grey-500); }
+  .tile--fig { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+  .tile--tbl { background: var(--blockr-green-50); border-color: #a7f3d0; color: var(--blockr-green-700); }
+  .cname { flex: 1; min-width: 0; font-size: var(--blockr-font-size-xs);
+           color: var(--blockr-grey-900); }
+  .sw { position: relative; width: 26px; height: 15px; border-radius: 999px; flex-shrink: 0;
+        background: var(--accent, var(--stack-prep)); }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 13px; width: 11px; height: 11px;
+               border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+  .d-sec { padding: 6px 10px; font-size: var(--blockr-font-size-sm);
+           color: var(--blockr-grey-700); }
+  .d-sec pre { margin: 6px 0 0; font-family: var(--blockr-font-mono); font-size: 0.68rem;
+               background: var(--blockr-grey-50); border: 1px solid var(--blockr-grey-100);
+               border-radius: 5px; padding: 6px 9px; color: var(--blockr-grey-700); }
+  .d-chap { grid-column: 2; font-size: 1.05rem; font-weight: 600; padding: 14px 0 2px 11px; }
+  .emptydoc { margin: 14px 0 4px 164px; font-size: var(--blockr-font-size-sm); font-style: italic;
+              color: var(--blockr-grey-400); }
+  .doc.dimmed { opacity: 0.45; transition: opacity 0.15s ease; }
+
+  /* ---- TODAY: the two controls we are replacing ----------------------- */
+  .old-filter { position: relative; width: 150px; margin: 16px 0 2px; }
+  .old-filter input { width: 100%; height: 32px; padding: 0 10px 0 30px;
+                      font-size: var(--blockr-font-size-sm);
+                      background: var(--blockr-grey-50);
+                      border: 1px solid var(--blockr-color-border);
+                      border-radius: var(--blockr-radius-md); outline: none; }
+  .old-filter svg { position: absolute; left: 10px; top: 9px; color: var(--blockr-grey-400); }
+  .old-picker { margin: 10px 0 4px 164px; }
+  .old-picker .fake-select { height: 30px; display: flex; align-items: center; padding: 0 10px;
+                             font-size: var(--blockr-font-size-sm); color: var(--blockr-grey-400);
+                             background: #fff; border: 1px solid var(--blockr-grey-200);
+                             border-radius: var(--blockr-radius-md); }
+
+  /* ---- the combo box (shared by all variants) ------------------------- */
+  .otls { position: relative; margin: 14px 0 2px; }
+  .otls__control { display: flex; align-items: center; gap: 8px; width: 100%; height: 34px;
+                   padding: 0 8px 0 10px; background: var(--blockr-grey-50);
+                   border: 1px solid var(--blockr-color-border);
+                   border-radius: var(--blockr-radius-md); cursor: text;
+                   transition: border-color 0.12s ease, background 0.12s ease,
+                               box-shadow 0.12s ease; }
+  .otls--open .otls__control, .otls__control:focus-within {
+    background: #fff; border-color: var(--blockr-blue-400);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10); }
+  .otls__icon { display: flex; color: var(--blockr-grey-400); flex-shrink: 0; }
+  .otls__input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent;
+                 font: inherit; font-size: var(--blockr-font-size-sm);
+                 color: var(--blockr-grey-900); padding: 0; }
+  .otls__input::placeholder { color: var(--blockr-grey-400); }
+  .otls__count { flex-shrink: 0; font-size: var(--blockr-font-size-xs);
+                 color: var(--blockr-grey-400); }
+  .otls__clear { display: none; align-items: center; justify-content: center; width: 20px;
+                 height: 20px; border: 0; padding: 0; background: transparent; cursor: pointer;
+                 color: var(--blockr-grey-400); border-radius: var(--blockr-radius-sm);
+                 flex-shrink: 0; }
+  .otls__clear:hover { background: var(--blockr-grey-100); color: var(--blockr-grey-700); }
+  .otls--filled .otls__clear { display: flex; }
+  .otls--filled .otls__count { display: none; }
+
+  .otls__menu { display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+                z-index: 30; max-height: 288px; overflow-y: auto; background: #fff;
+                border: 1px solid var(--blockr-color-border); border-radius: var(--blockr-radius-lg);
+                box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12); padding: 4px 0; }
+  .otls--open .otls__menu { display: block; }
+  .otls--inline .otls__menu { position: static; display: block; box-shadow: none;
+                              margin-top: 6px; max-height: none; }
+  .otls__group { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                 padding: 8px 12px 4px; font-size: var(--blockr-font-size-xs); font-weight: 500;
+                 color: var(--blockr-grey-400); text-transform: uppercase;
+                 letter-spacing: 0.04em; }
+  .otls__group + .otls__opt { border-top: 0; }
+  .otls__opt { display: flex; align-items: center; gap: 9px; padding: 6px 12px; cursor: pointer;
+               border-left: 2px solid transparent; }
+  .otls__opt:hover, .otls__opt.hot { background: var(--blockr-grey-50);
+                                     border-left-color: var(--blockr-blue-400); }
+  .otls__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .otls__name { display: block; font-size: var(--blockr-font-size-sm);
+                color: var(--blockr-grey-900); line-height: 1.35;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .otls__name mark { background: #fef08a; color: inherit; border-radius: 2px; padding: 0 1px; }
+  .otls__meta { display: block; font-size: var(--blockr-font-size-xs);
+                color: var(--blockr-grey-400); line-height: 1.35;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .otls__act { flex-shrink: 0; font-size: var(--blockr-font-size-xs); font-weight: 500;
+               color: var(--blockr-grey-400); display: flex; align-items: center; gap: 4px; }
+  .otls__opt:hover .otls__act, .otls__opt.hot .otls__act { color: var(--blockr-blue-600); }
+  .otls__opt--in .otls__act { color: var(--blockr-green-600); }
+  .otls__empty { padding: 12px; text-align: center; font-size: var(--blockr-font-size-sm);
+                 color: var(--blockr-grey-400); font-style: italic; }
+  .otls__foot { padding: 6px 12px; border-top: 1px solid var(--blockr-grey-100);
+                font-size: var(--blockr-font-size-xs); color: var(--blockr-grey-400);
+                display: flex; gap: 12px; }
+  kbd { font-family: inherit; font-size: 0.68rem; border: 1px solid var(--blockr-grey-200);
+        border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; background: #fff;
+        color: var(--blockr-grey-500); }
+  .pill { display: inline-flex; align-items: center; height: 16px; padding: 0 6px;
+          border-radius: 999px; font-size: 0.65rem; font-weight: 500; }
+  .pill--anc { background: var(--blockr-grey-100); color: var(--blockr-grey-500); }
+  .flash { animation: flash 1.1s ease; }
+  @keyframes flash { 0% { background: var(--blockr-blue-50); } 100% { background: transparent; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Outline search — one box over the whole board</h1>
+<p class="lede">The outline lists the report. Everything else on the board, which on a
+CDEx-sized board is 90&nbsp;% of it, has to be reachable by search. Today
+that is split over two controls, neither of which sees the whole board. These are
+three ways to make it one.</p>
+
+<div class="callout">
+  <strong>What changed underneath.</strong> The outline no longer lists every
+  block, only the ones flagged for the report, and the report flag now defaults
+  to <em>off</em>. A fresh board opens on an empty document. That makes the
+  search box the primary way blocks enter the document, not a convenience.
+</div>
+
+<h2>Today <span class="tag tag-old">what we are replacing</span></h2>
+
+<p>Two controls, 150&nbsp;px and 280&nbsp;px wide, at opposite ends of the panel.
+The top one filters the rows that are already listed. The bottom one adds from
+the pool. Neither searches the other's set, and on a real dock panel
+(375&nbsp;px measured on the 80-block demo) the picker is squeezed to
+161&nbsp;px.</p>
+
+<div class="stage">
+  <div class="stage-label">Current state</div>
+  <div class="panel">
+    <div class="panel-title">Scale report (80 blocks)</div>
+    <hr class="panel-rule">
+    <div class="old-filter">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Filter blocks…" readonly>
+    </div>
+    <div class="doc" id="doc-today"></div>
+    <div class="old-picker">
+      <div class="fake-select">Add block to report…</div>
+    </div>
+  </div>
+  <p class="hint" style="margin-top:10px">Filter searches 3 rows. The picker
+    searches the other 77. Neither searches all 80.</p>
+</div>
+
+<h2>A. One command bar <span class="tag tag-rec">recommended</span></h2>
+
+<p>One full-width box under the report title. Focus opens it on the whole board,
+typing narrows it. Results come back in two groups, what is already in the
+report and what is not, so the same query answers both "where is that block"
+and "give me that block". Clicking an entry in the first group scrolls to its row;
+clicking one in the second adds it to the report. The menu stays open after an
+add, so building a document is: type, Enter, type, Enter.</p>
+
+<div class="stage">
+  <div class="stage-label">Live — click the box and type (try "chain 3", "sepal", "step")</div>
+  <div class="panel" id="panel-a">
+    <div class="panel-title">Scale report (80 blocks)</div>
+    <hr class="panel-rule">
+    <div class="otls" data-combo="a" data-mode="overlay"></div>
+    <div class="doc" data-doc="a"></div>
+    <div class="emptydoc" data-empty="a" hidden>Nothing in the report yet: search for a block above.</div>
+  </div>
+</div>
+
+<h3>What each result row carries</h3>
+<table>
+  <tr><th>Part</th><th>Why it is there</th></tr>
+  <tr><td>Icon tile</td><td>The block's own icon, the same one the outline row and the
+    dock tab show. Cheap recognition, already rendered per class.</td></tr>
+  <tr><td>Name</td><td>The block name, with the matched substring marked.</td></tr>
+  <tr><td>Meta line</td><td>Chapter, block type, and the first words of the
+    description. On a pharma board the description is what distinguishes
+    "Table 14.3.1" from "Table 14.3.2".</td></tr>
+  <tr><td><span class="pill pill--anc">runs</span> pill</td><td>The block is not in the
+    report but the report depends on it, so it already runs invisibly
+    (<code>include=FALSE</code>). Adding it only makes its output visible.</td></tr>
+  <tr><td>Trailing action</td><td><em>Add</em> for the pool, <em>Go to</em> for what
+    is already listed. The action is a word, not an icon: the two groups do
+    different things and the row should say which.</td></tr>
+</table>
+
+<h2>B. Filter in place, offer the pool <span class="tag tag-alt">alternative</span></h2>
+
+<p>Same box, but the two answers land in different places: matching rows that are
+already in the report stay in the document and everything else is hidden (today's
+client-side filter), while the dropdown carries only the blocks that are <em>not</em>
+in the report. You see in-report matches as real rows, with their descriptions and
+code, rather than as one-line summaries.</p>
+
+<p>The cost is that one box has two visual outputs and the document jumps around
+while typing. That was worth it when the outline listed all 80 blocks. Now that it
+lists only the report, typically a handful of rows, filtering it buys little.</p>
+
+<div class="stage">
+  <div class="stage-label">Live — typing filters the document behind the menu</div>
+  <div class="panel" id="panel-b">
+    <div class="panel-title">Scale report (80 blocks)</div>
+    <hr class="panel-rule">
+    <div class="otls" data-combo="b" data-mode="filter"></div>
+    <div class="doc" data-doc="b"></div>
+    <div class="emptydoc" data-empty="b" hidden>Nothing in the report yet: search for a block above.</div>
+  </div>
+</div>
+
+<h2>C. Results in flow, no overlay <span class="tag tag-alt">alternative</span></h2>
+
+<p>Identical control and identical grouping, except the results are not a popup:
+they render in the panel, pushing the document down, and stay until the query is
+cleared. Nothing is hidden behind a layer, which matters in a dock panel that can
+be 375&nbsp;px wide, and the result list can breathe (two lines per entry).</p>
+
+<p>The cost is that the document is pushed out of view exactly when you are trying
+to decide what it still needs, and the panel scroll position moves under you.</p>
+
+<div class="stage">
+  <div class="stage-label">Live — results sit in the panel, not over it</div>
+  <div class="panel" id="panel-c">
+    <div class="panel-title">Scale report (80 blocks)</div>
+    <hr class="panel-rule">
+    <div class="otls otls--inline" data-combo="c" data-mode="inline"></div>
+    <div class="doc" data-doc="c"></div>
+    <div class="emptydoc" data-empty="c" hidden>Nothing in the report yet: search for a block above.</div>
+  </div>
+</div>
+
+<h2>Behaviour, whichever variant wins</h2>
+<table>
+  <tr><th>Gesture</th><th>Result</th></tr>
+  <tr><td>Focus, empty query</td><td>Menu opens on the whole board, report blocks
+    first. It doubles as the browse control, so "add a block" needs no typing.</td></tr>
+  <tr><td>Type</td><td>Match on name, description and chapter. Both groups filter.</td></tr>
+  <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Move through both groups as one list.</td></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Act on the highlighted row: add, or go to.</td></tr>
+  <tr><td>After an add</td><td>Menu stays open, query kept, the entry moves to the
+    "in the report" group. Adding five blocks is five keystrokes, not five
+    round trips.</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>First press clears the query, second closes the menu.</td></tr>
+  <tr><td>Nothing matches</td><td>"No block matches <em>query</em>", never an empty
+    menu with no explanation.</td></tr>
+  <tr><td>Show-all mode</td><td>The gear's "Show all blocks" lists the whole board;
+    the search box is unchanged, every result is then a "go to".</td></tr>
+</table>
+
+<h2>Built <span class="tag tag-rec">A, on the block browser's rows, blockr.outline 0.0.82</span></h2>
+
+<p>The shipped control is variant A wearing the block browser's clothes. The
+mocks below predate that decision and keep their own row styling; treat them as
+the record of the <em>behaviour</em> (two groups, go-to versus add, menu stays
+open after an add), not of the visual detail.</p>
+
+<p>What that means concretely: the field is
+<code>.blockr-block-browser-search</code> (magnifier, grey-50 fill, blue focus
+ring, native clear), the rows are
+<code>.blockr-block-browser-card</code> with the 32&nbsp;px tinted icon tile and
+the 14&nbsp;px name, the sections are
+<code>.blockr-block-browser-category</code> headers, and keyboard selection uses
+the browser's own <code>.card-selected</code>, with wrapping arrows and the top
+hit selected after every keystroke so Enter always does something. Two
+divergences on purpose: the second line is the block <em>description</em> rather
+than the package name, because on a report board that is what tells two similar
+tables apart, and the package pill slot carries the <code>runs</code> marker
+instead.</p>
+
+<p>Two traps for anyone reusing those classes elsewhere. The
+<code>--bb-*</code> tokens the card CSS reads are declared on the browser's own
+roots, so a third consumer has to provide them; blockr.outline maps them onto the
+<code>--blockr-*</code> scale rather than copying the values. And wearing
+<code>.blockr-block-browser</code> itself to get those tokens is a trap: that
+class is also the browser's Shiny input binding and search JS, which promptly
+adopted the outline's control as a browser instance, filtered it by data
+attributes these cards do not carry and declared it empty.</p>
+
+<h2>Recommendation</h2>
+
+<p>Variant A. One box, one popup, two groups. It is the only one of the three where
+the same keystroke sequence works whether or not the block happens to be in the
+report already, and it leaves the document alone while you search, which is what
+you want when the question is "what is missing from this deck".</p>
+
+<p>C is the fallback if the overlay turns out to sit badly in a narrow dock panel;
+it is the same component with <code>position: static</code> on the menu, so the
+decision can be deferred and flipped with one class.</p>
+
+<h3>What it replaces in the code</h3>
+<table>
+  <tr><th>Now</th><th>After</th></tr>
+  <tr><td><code>.blockr-otl-search</code> input in <code>R/ext.R</code>, 150&nbsp;px,
+    with the client-only <code>applyFilter()</code> in <code>R/outline-ui.R</code></td>
+    <td>the same static (focus-stable) slot, full width, carrying the combo box</td></tr>
+  <tr><td><code>outline_include_picker()</code>, a selectize under the list, pool
+    only, rebuilt on every skeleton redraw</td>
+    <td>gone; the pool is the second group of the menu</td></tr>
+  <tr><td><code>input$otl_include</code></td>
+    <td>unchanged: the menu writes the same input, so the server observer that
+      flips the report flag stays as it is</td></tr>
+  <tr><td>—</td><td><code>input$otl_goto</code>: scroll the listed row into view and
+    flash it</td></tr>
+</table>
+<p class="hint">One trap the mock already hit: the outside-click listener that closes
+the menu has to run in the <strong>capture</strong> phase. Choosing an entry
+re-renders the menu, which detaches the clicked node, so a bubble-phase listener
+sees a target that is no longer inside the control and closes the menu on every
+single add. Same shape as the gear-band capture fix in blockr.dm.</p>
+<p class="hint">The block list the menu renders is already computed:
+<code>skel$addable</code> (the pool, named) plus <code>skel$ids</code> / <code>skel$names</code>
+(the listed rows). Both would move into one <code>skel$catalog</code> carrying id,
+name, icon, chapter, description snippet and in-report flag.</p>
+
+<script>
+// ---------------------------------------------------------------------------
+// Fake board: the 80-block scale demo, trimmed to something readable.
+// ---------------------------------------------------------------------------
+const BLOCKS = [
+  {id: "c1_data", name: "Chain 1: iris", kind: "dataset block", chap: "Chain 1",
+   desc: "Entry point of chain 1: the iris measurements.", icon: "D", tile: "", anc: true},
+  {id: "c1_t3", name: "Chain 1 step 3", kind: "head block", chap: "Chain 1",
+   desc: "Step 3 of chain 1: narrow to the first rows.", icon: "H", tile: "tbl", anc: true},
+  {id: "c1_t9", name: "Chain 1 step 9", kind: "head block", chap: "Chain 1",
+   desc: "Step 9 of chain 1: the table that goes in the deck.", icon: "H", tile: "tbl",
+   report: true},
+  {id: "c2_data", name: "Chain 2: mtcars", kind: "dataset block", chap: "Chain 2",
+   desc: "Entry point of chain 2: the mtcars measurements.", icon: "D", tile: ""},
+  {id: "c2_t4", name: "Chain 2 step 4", kind: "subset block", chap: "Chain 2",
+   desc: "Step 4 of chain 2: four cylinders only.", icon: "S", tile: ""},
+  {id: "c2_t9", name: "Chain 2 step 9", kind: "head block", chap: "Chain 2",
+   desc: "Step 9 of chain 2: fuel efficiency by cylinder count.", icon: "H",
+   tile: "tbl", report: true},
+  {id: "c3_data", name: "Chain 3: airquality", kind: "dataset block", chap: "Chain 3",
+   desc: "Entry point of chain 3: daily air quality readings.", icon: "D", tile: ""},
+  {id: "c3_t2", name: "Chain 3 step 2", kind: "subset block", chap: "Chain 3",
+   desc: "Step 3 of chain 3: drop the days with missing ozone.", icon: "S", tile: ""},
+  {id: "c3_t9", name: "Chain 3 step 9", kind: "scatter block", chap: "Chain 3",
+   desc: "Step 9 of chain 3: ozone against temperature.", icon: "P", tile: "fig",
+   report: true},
+  {id: "c4_data", name: "Chain 4: attenu", kind: "dataset block", chap: "Chain 4",
+   desc: "Entry point of chain 4: earthquake attenuation.", icon: "D", tile: ""},
+  {id: "c4_t7", name: "Chain 4 step 7", kind: "scatter block", chap: "Chain 4",
+   desc: "Step 7 of chain 4: acceleration against distance.", icon: "P", tile: "fig"},
+  {id: "c5_t1", name: "Chain 5 step 1", kind: "subset block", chap: "Chain 5",
+   desc: "Step 1 of chain 5: the sepal measurements only.", icon: "S", tile: ""},
+  {id: "c5_t8", name: "Chain 5 step 8", kind: "summarize block", chap: "Chain 5",
+   desc: "Step 8 of chain 5: mean sepal length per species.", icon: "Σ", tile: "tbl"},
+  {id: "c6_t5", name: "Chain 6 step 5", kind: "head block", chap: "Chain 6",
+   desc: "Step 5 of chain 6: the quakes near the surface.", icon: "H", tile: "tbl"},
+  {id: "c7_t2", name: "Chain 7 step 2", kind: "subset block", chap: "Chain 7",
+   desc: "Step 2 of chain 7: Swiss provinces above the median.", icon: "S", tile: ""},
+  {id: "c8_t6", name: "Chain 8 step 6", kind: "summarize block", chap: "Chain 8",
+   desc: "Step 6 of chain 8: tooth growth by dose and supplement.",
+   icon: "Σ", tile: "tbl"}
+];
+
+const ACCENT = {"Chain 1": "var(--stack-prep)", "Chain 2": "var(--stack-out)",
+                "Chain 3": "#7c3aed"};
+
+// One independent state per variant, so the three mocks do not share flags.
+const STATE = {};
+["a", "b", "c"].forEach(function(k) {
+  STATE[k] = BLOCKS.map(function(b) { return Object.assign({}, b); });
+});
+
+function esc(s) {
+  return s.replace(/[&<>"]/g, function(c) {
+    return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c];
+  });
+}
+
+function mark(text, q) {
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + q.length)) +
+    "</mark>" + esc(text.slice(i + q.length));
+}
+
+function matches(b, q) {
+  if (!q) return true;
+  return (b.name + " " + b.desc + " " + b.chap + " " + b.kind)
+    .toLowerCase().indexOf(q) >= 0;
+}
+
+// ---- the document behind the box ------------------------------------------
+function renderDoc(key, filterQ) {
+  const host = document.querySelector('[data-doc="' + key + '"]') ||
+    document.getElementById("doc-today");
+  if (!host) return;
+  const blocks = (STATE[key] || STATE.a).filter(function(b) { return b.report; });
+  const shown = blocks.filter(function(b) { return !filterQ || matches(b, filterQ); });
+  const empty = document.querySelector('[data-empty="' + key + '"]');
+  if (empty) empty.hidden = blocks.length > 0;
+
+  let html = "", chap = null;
+  shown.forEach(function(b) {
+    if (b.chap !== chap) {
+      chap = b.chap;
+      html += '<div class="d-chap">' + esc(chap) + "</div>";
+    }
+    const accent = ACCENT[b.chap] || "var(--stack-prep)";
+    html += '<div class="d-gut" style="--accent:' + accent + '">' +
+        '<div class="chip" style="--accent:' + accent + '">' +
+          '<span class="tile ' + (b.tile ? "tile--" + b.tile : "") + '">' + b.icon + "</span>" +
+          '<span class="cname">' + esc(b.name) + "</span>" +
+          '<span class="sw"></span>' +
+        "</div>" +
+      "</div>" +
+      '<div class="d-sec" id="row-' + key + "-" + b.id + '">' +
+        "<div>" + esc(b.desc) + "</div>" +
+        "<pre>" + esc(b.id) + " &lt;- " + esc(b.kind.split(" ")[0]) + "(…)</pre>" +
+      "</div>";
+  });
+  host.innerHTML = html;
+}
+
+// ---- the combo box ---------------------------------------------------------
+function buildCombo(root) {
+  const key = root.dataset.combo;
+  const mode = root.dataset.mode;
+  const inline = mode === "inline";
+
+  root.innerHTML =
+    '<div class="otls__control">' +
+      '<span class="otls__icon">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/>' +
+        '<line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+      "</span>" +
+      '<input class="otls__input" placeholder="Search blocks, or add one to the report…" ' +
+        'autocomplete="off" spellcheck="false">' +
+      '<span class="otls__count"></span>' +
+      '<button class="otls__clear" title="Clear" aria-label="Clear">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/>' +
+        '<line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      "</button>" +
+    "</div>" +
+    '<div class="otls__menu"></div>';
+
+  const input = root.querySelector(".otls__input");
+  const menu = root.querySelector(".otls__menu");
+  const count = root.querySelector(".otls__count");
+  const clear = root.querySelector(".otls__clear");
+  let hot = 0;
+
+  function pool() {
+    const q = input.value.trim().toLowerCase();
+    const hits = STATE[key].filter(function(b) { return matches(b, q); });
+    return {
+      q: q,
+      inn: hits.filter(function(b) { return b.report; }),
+      out: hits.filter(function(b) { return !b.report; })
+    };
+  }
+
+  function optHtml(b, q, idx, isIn) {
+    return '<div class="otls__opt ' + (isIn ? "otls__opt--in" : "") +
+      (idx === hot ? " hot" : "") + '" data-idx="' + idx + '" data-id="' + b.id + '">' +
+      '<span class="tile ' + (b.tile ? "tile--" + b.tile : "") + '">' + b.icon + "</span>" +
+      '<span class="otls__body">' +
+        '<span class="otls__name">' + mark(b.name, q) +
+          (b.anc && !isIn ? ' <span class="pill pill--anc">runs</span>' : "") +
+        "</span>" +
+        '<span class="otls__meta">' + esc(b.chap) + " · " + esc(b.kind) + " · " +
+          mark(b.desc, q) + "</span>" +
+      "</span>" +
+      '<span class="otls__act">' + (isIn ? "Go to" : "Add") + "</span>" +
+    "</div>";
+  }
+
+  function render() {
+    const p = pool();
+    const all = p.inn.concat(p.out);
+    if (hot >= all.length) hot = Math.max(0, all.length - 1);
+    count.textContent = STATE[key].filter(function(b) { return !b.report; }).length +
+      " not in report";
+
+    let html = "";
+    if (!all.length) {
+      html = '<div class="otls__empty">No block matches “' + esc(input.value) +
+        "”</div>";
+    } else {
+      let i = 0;
+      if (p.inn.length) {
+        html += '<div class="otls__group"><span>In the report</span><span>' +
+          p.inn.length + "</span></div>";
+        p.inn.forEach(function(b) { html += optHtml(b, p.q, i++, true); });
+      }
+      if (p.out.length) {
+        html += '<div class="otls__group"><span>Add to the report</span><span>' +
+          p.out.length + "</span></div>";
+        p.out.forEach(function(b) { html += optHtml(b, p.q, i++, false); });
+      }
+      html += '<div class="otls__foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span>' +
+        "<span><kbd>Enter</kbd> add or go to</span><span><kbd>Esc</kbd> clear</span></div>";
+    }
+    menu.innerHTML = html;
+    root.classList.toggle("otls--filled", input.value.length > 0);
+
+    if (mode === "filter") {
+      renderDoc(key, p.q);
+    }
+  }
+
+  function choose(idx) {
+    const p = pool();
+    const all = p.inn.concat(p.out);
+    const b = all[idx];
+    if (!b) return;
+    if (b.report) {
+      // "Go to": close, scroll the row into view, flash it.
+      close();
+      const row = document.getElementById("row-" + key + "-" + b.id);
+      if (row) {
+        row.scrollIntoView({block: "center", behavior: "smooth"});
+        row.classList.remove("flash");
+        void row.offsetWidth;
+        row.classList.add("flash");
+      }
+      return;
+    }
+    b.report = true;                 // the otl_include write
+    renderDoc(key, mode === "filter" ? p.q : "");
+    render();                        // menu stays open, query kept
+    input.focus();
+  }
+
+  function open() { root.classList.add("otls--open"); render(); }
+  function close() { if (!inline) root.classList.remove("otls--open"); }
+
+  input.addEventListener("focus", open);
+  input.addEventListener("input", function() { hot = 0; render(); });
+  clear.addEventListener("click", function() {
+    input.value = ""; hot = 0; render(); input.focus();
+    if (mode === "filter") renderDoc(key, "");
+  });
+  menu.addEventListener("mousedown", function(ev) {
+    const opt = ev.target.closest(".otls__opt");
+    if (!opt) return;
+    ev.preventDefault();
+    choose(parseInt(opt.dataset.idx, 10));
+  });
+  input.addEventListener("keydown", function(ev) {
+    const p = pool();
+    const n = p.inn.length + p.out.length;
+    if (ev.key === "ArrowDown") { hot = Math.min(n - 1, hot + 1); render(); ev.preventDefault(); }
+    else if (ev.key === "ArrowUp") { hot = Math.max(0, hot - 1); render(); ev.preventDefault(); }
+    else if (ev.key === "Enter") { choose(hot); ev.preventDefault(); }
+    else if (ev.key === "Escape") {
+      if (input.value) { input.value = ""; hot = 0; render(); if (mode === "filter") renderDoc(key, ""); }
+      else { close(); input.blur(); }
+    }
+  });
+  // CAPTURE phase on purpose: the option handler re-renders the menu, which
+  // detaches the clicked node, and a bubble-phase listener would then see a
+  // target that is no longer inside `root` and close the menu on every add.
+  document.addEventListener("mousedown", function(ev) {
+    if (!root.contains(ev.target)) close();
+  }, true);
+
+  if (inline) { root.classList.add("otls--open"); render(); }
+}
+
+renderDoc("today", "");
+["a", "b", "c"].forEach(function(k) { renderDoc(k, ""); });
+document.querySelectorAll("[data-combo]").forEach(buildCombo);
+</script>
+</main>
+</body>
+</html>
