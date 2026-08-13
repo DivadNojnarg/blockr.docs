@@ -28,7 +28,9 @@ new_myplot_block <- function(x = character(), y = character(), ...) {
         observeEvent(input$ycol, y_col(input$ycol))
 
         # Refresh the column choices whenever upstream data changes,
-        # keeping the current selection if it still exists.
+        # keeping the current selection if it still exists. isTRUE()
+        # covers the zero-length startup default; a vanished column
+        # resets to "" (unset), which pauses evaluation again.
         observeEvent(colnames(data()), {
           cols <- colnames(data())
           updateSelectInput(
@@ -70,7 +72,9 @@ new_myplot_block <- function(x = character(), y = character(), ...) {
     },
     class = "myplot_block",
     expr_type = "bquoted",
-    allow_empty_state = TRUE,
+    # x and y are required state (allow_empty_state defaults to FALSE):
+    # the framework holds evaluation and shows "waiting for its inputs to
+    # be set" until both columns are chosen. No placeholder plot needed.
     ...
   )
 }

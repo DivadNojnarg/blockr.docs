@@ -11,12 +11,9 @@ eval_bquoted <- function(expr, df) {
 }
 
 # --- Tier 1: expression builder ---------------------------------------------
-
-test_that("unconfigured state yields a placeholder plot, not an error", {
-  expr <- make_myplot_expr()
-  p <- eval_bquoted(expr, iris)
-  expect_s3_class(p, "ggplot")
-})
+# No unconfigured-state test: x and y are required state (allow_empty_state
+# defaults to FALSE), so the framework never evaluates the expression until
+# both are set. That gating is blockr.core's contract, tested there.
 
 test_that("configured state yields the boxplot with the right mappings", {
   expr <- make_myplot_expr(x = "Species", y = "Sepal.Length")

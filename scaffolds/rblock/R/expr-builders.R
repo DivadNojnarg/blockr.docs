@@ -1,11 +1,3 @@
-#' Is a column choice set?
-#'
-#' @param v Candidate column name.
-#' @noRd
-is_set <- function(v) {
-  is.character(v) && length(v) == 1L && nzchar(v)
-}
-
 #' Build the myplot expression
 #'
 #' Pure function: column choices in, quoted ggplot2 code out. Kept free of
@@ -17,27 +9,15 @@ is_set <- function(v) {
 #' - Build language objects (`as.name()`), never `paste()` + parse.
 #' - Qualify every function (`ggplot2::`): the expression is evaluated
 #'   outside this package's namespace.
-#' - An unconfigured block must never error: return a friendly placeholder
-#'   plot until both columns are chosen.
+#' - No unconfigured branch: `x` and `y` are required state, so the
+#'   framework only evaluates this expression once both are set (see the
+#'   constructor). Don't guard, and don't error -- a throw here would
+#'   escape the framework's error handling.
 #'
 #' @param x Grouping column (mapped to the x axis, treated as discrete).
 #' @param y Numeric column (mapped to the y axis).
 #' @noRd
-make_myplot_expr <- function(x = character(), y = character()) {
-  if (!is_set(x) || !is_set(y)) {
-    return(
-      bbquote(
-        ggplot2::ggplot() +
-          ggplot2::annotate(
-            "text",
-            x = 0, y = 0, label = "Pick x and y columns to draw the plot",
-            color = "grey45", size = 5
-          ) +
-          ggplot2::theme_void()
-      )
-    )
-  }
-
+make_myplot_expr <- function(x, y) {
   bbquote(
     ggplot2::ggplot(
       .(data),
