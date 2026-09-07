@@ -20,18 +20,23 @@ drawing, so a prompt only has to say what this widget looks like.
 
 ```
 R/<name>.R                     constructor + Shiny bindings
-inst/htmlwidgets/<name>.js     HTMLWidgets.widget({ name, type, factory })
-inst/htmlwidgets/<name>.yaml   dependencies, empty if there are none
+inst/htmlwidgets/<name>.js     HTMLWidgets.widget({ name, type: "output", factory })
+inst/htmlwidgets/<name>.yaml   required, even when it declares no dependencies
+inst/htmlwidgets/lib/          any JS library you vendor
 ```
 
-`<name>Output()` over `htmlwidgets::shinyWidgetOutput()` and
-`render<Name>()` over `htmlwidgets::shinyRenderWidget()`, both with
-`package = "<pkg>"`. Give `createWidget()` a `sizingPolicy()` with a real
-`defaultHeight`.
+The widget `name` in the JS has to match the file name and the `name` you
+pass to `createWidget()`, or nothing binds.
+
+`<name>Output()` wraps `htmlwidgets::shinyWidgetOutput(outputId, name,
+width, height, package = "<pkg>")`, and `render<Name>()` wraps
+`htmlwidgets::shinyRenderWidget(expr, outputFunction, env, quoted = TRUE)`.
 
 **Bump `Version:` in DESCRIPTION after every edit under `inst/`.**
 htmlDependency caches by package version, so without it the browser keeps
 serving the old JS and you debug a file nobody is running.
+
+Reference: <https://www.htmlwidgets.org/develop_intro.html>.
 
 ## The constructor
 
@@ -40,26 +45,44 @@ serving the old JS and you debug a file nobody is running.
   widget does not have, which surfaces as `unused argument`.
 - Keep the payload JSON-simple: lists, atomic vectors, no S4, no factors.
   `NA` becomes `null`.
+- **A data frame does not arrive as rows.** It is serialised in long form,
+  an object of named vectors, so `x$riders$bib` is an array and there is no
+  `x$riders[0]`. Either call `HTMLWidgets.dataframeToD3()` on the JS side,
+  or build the list of rows in R and keep the JS dumb. Pick one and say so
+  in the payload's documentation.
+- A JS callback travels as `htmlwidgets::JS("function(x) {...}")`. Odd
+  serialisation needs go through the `TOJSON_ARGS` attribute rather than a
+  hand-rolled `toJSON()`.
 - Thin anything long. A few hundred points is past screen resolution.
 
 ## The factory
 
+`factory(el, width, height)` returns an object with `renderValue(x)` and,
+for anything that has to re-lay-out, `resize(width, height)`.
+
 - `renderValue` runs before anything of yours exists: **guard every dom
-  reference**. htmlwidgets catches a throw in `renderValue` and logs it to the
-  browser console, so a broken widget is a blank widget with a clean R
+  reference**. htmlwidgets catches a throw in `renderValue` and logs it to
+  the browser console, so a broken widget is a blank widget with a clean R
   console.
-- **Style the container property by property.** `el.style.cssText = "..."`
-  replaces the whole inline style, including the width and height
-  htmlwidgets set on the output element, and the widget then draws correctly
-  into a box 0 pixels tall, which is indistinguishable from never rendering.
-- Redraw on resize with a `ResizeObserver`. Scaling the SVG blurs every
-  label.
-- Keep per-instance state in the factory closure, never in a global: under
-  Shiny, `renderValue` is called again on every update, and two widgets can
-  share a page.
+- Keep per-instance state in the factory closure, never in a global: the
+  factory runs once per element, `renderValue` is called again on every
+  Shiny update, and two widgets can share a page.
+- **Implement `resize()`.** That is the framework's hook: it computes the
+  size and hands it to you, rather than styling your drawing itself. Redraw
+  or re-lay-out there; scaling an SVG blurs every label. Add a
+  `ResizeObserver` only when the container can change size without the
+  framework being told, which is the case inside a dock panel a user drags.
+- **Style the container property by property.** `shinyWidgetOutput()` puts
+  the width and height inline on that very element, so
+  `el.style.cssText = "..."` replaces the whole attribute and takes them
+  with it. The widget then draws correctly into a box 0 pixels tall, which
+  is indistinguishable from never rendering.
 - `Number.isFinite()`, not `isFinite()`. `isFinite(null)` is **true**,
   because `null` coerces to `0`, so a missing value prints as
   `"null m"` and a missing kilometre draws at zero.
+
+Reference: <https://www.htmlwidgets.org/develop_sizing.html> and
+<https://www.htmlwidgets.org/develop_advanced.html>.
 
 ## Drawing over a filled area
 
