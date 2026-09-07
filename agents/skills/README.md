@@ -17,6 +17,7 @@ folder under `~/.claude/skills/`.
 | Skill | When to use |
 |---|---|
 | [blockr-block](./blockr-block/) | Adding a new block to a blockr package. Walks through the R-driven vs JS-driven choice, starts new packages from the [scaffolds](../../scaffolds/), writes the matching tests, and verifies the result in a real board. |
+| [blockr-htmlwidget](./blockr-htmlwidget/) | Building a custom htmlwidget for a blockr package and wrapping it in a block: file layout, the R payload, the JS factory, drawing and label collisions, pointer handling, the block contract, and what to assert when verifying. |
 | [shiny-chromote-inspect](./shiny-chromote-inspect/) | Seeing what a running app actually rendered: driving a headless Chrome from R to read the DOM, htmlwidget state, Shiny input and output values, and the browser console. This is the browser verification `blockr-block` finishes with. |
 
 Skills that automate a team's internal process rather than the act of building
